@@ -1,0 +1,8 @@
+[example]
+properties.creators.address = REPLACEME
+num_tokens = 2
+name_prefix = lightcycle
+description = lightcycle description
+collection = lightcycle collection
+symbol = LCR
+seller_fee_basis_points = 100

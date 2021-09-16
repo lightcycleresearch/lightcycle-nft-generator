@@ -1,0 +1,5 @@
+venv
+.cache
+config.ini
+metadata
+assets
