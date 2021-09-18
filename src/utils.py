@@ -52,8 +52,8 @@ def generate_random_attributes(traits):
     unrestricted_types = [
         tt for tt in traits["trait_types"] if tt not in trait_restrictions
     ]
-    print(restricted_types)
-    print(unrestricted_types)
+    logger.debug(restricted_types)
+    logger.debug(unrestricted_types)
 
     # select the restrictions first
     for trait_type in restricted_types:
