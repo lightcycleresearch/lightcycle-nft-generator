@@ -224,10 +224,11 @@ def main():
         for i, fname in enumerate(fnames):
             assert i == int(fname.split(".")[0])
 
-            dest_img_fpath = os.path.join(images_fdpath, f"{i}.png")
+            img_fname = f"{i}.png"
+            dest_img_fpath = os.path.join(images_fdpath, img_fname)
             if os.path.exists(dest_img_fpath) and not args.overwrite:
                 logger.warning(
-                    f"Already exists. You must pass --overwrite to overwrite"
+                    f"{img_fname} already exists. You must pass --overwrite to overwrite"
                 )
                 continue
 
@@ -282,7 +283,6 @@ def main():
             pass
 
         for token_num in range(0, num_tokens):
-            logger.info(f"Combining assets for {token_num}")
 
             # source
             image_fname = f"{token_num}.png"
@@ -298,10 +298,11 @@ def main():
                 os.path.exists(image_dest) or os.path.exists(metadata_dest)
             ):
                 logger.warning(
-                    f"Already exists. You must pass --overwrite to overwrite"
+                    f"{image_fname} or {metadata_fname} already exist. You must pass --overwrite to overwrite"
                 )
                 continue
 
+            logger.info(f"Combining assets for {token_num}")
             # copy to assets
             copyfile(image_source, image_dest)
             copyfile(metadata_source, metadata_dest)
