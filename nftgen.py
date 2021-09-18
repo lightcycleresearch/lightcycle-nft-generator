@@ -133,7 +133,7 @@ def main():
             except KeyError:
                 trait_restrictions = []
             # restrictions are only one level
-            if trait_type in trait_restrictions:
+            if not trait_restrictions or trait_type in trait_restrictions:
                 try:
                     os.makedirs(trait_type_fdpath)
                 except FileExistsError:
