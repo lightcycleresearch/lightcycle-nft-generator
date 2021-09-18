@@ -191,7 +191,6 @@ def main():
             metadata["image"] = image_fname
             metadata["name"] = f"{name_prefix} #{token_num}"
             metadata["properties"]["files"][0]["uri"] = image_fname
-            logger.info(f"Generating metadata for token {token_num} -> {metadata}")
             metadata["attributes"] = su.generate_random_attributes(
                 traits=config[project_name]["traits"]
             )
@@ -200,10 +199,11 @@ def main():
             metadata_fpath = os.path.join(project_fdpath, "metadata", metadata_fname)
             if os.path.exists(metadata_fpath) and not args.overwrite:
                 logger.warning(
-                    f"Already exists. You must pass --overwrite to overwrite"
+                    f"{metadata_fname} already exists. You must pass --overwrite to overwrite"
                 )
                 continue
 
+            logger.info(f"Generating metadata for token {token_num} -> {metadata}")
             logger.info(f"Creating {metadata_fpath}")
             with open(metadata_fpath, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=4)
