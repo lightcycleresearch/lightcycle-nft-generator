@@ -6,7 +6,7 @@ Generate NFTs with metaplex standard
 
 1. Create venv 
 	```
-	make venv
+	 python3 -m venv venv
 	```
 2. Activate venv
 	```
@@ -17,9 +17,9 @@ Generate NFTs with metaplex standard
 	pip install -r requirements.txt
 	```
 
-## DEVELOP
+### DEVELOP
 
-1. To run tests:
+1. Install development requirements
 	```
 	pip install -r requirements-dev.txt
 	```
@@ -30,31 +30,35 @@ Generate NFTs with metaplex standard
 
 ## USAGE
 
-1. Create config.ini end change `REPLACEME` with your address
+1. Create config
 	```
 	cp config.yaml.example config.yaml
 	```
-2. Initialize project
+2. Edit config to change `REPLACEME` with your address
+	```
+	vim config.yaml
+	```
+3. Initialize project
 	```
 	nftgen.py --project example --config config.yaml --initialize
 	```
-3. Add your images to the projects/example/traits/ folders that were created by the previous command
-4. Generate metadata
+4. Add your images to the projects/example/traits/ folders that were created by the previous command
+5. Generate metadata
 	```
 	nftgen.py --project example --config config.yaml --generate-metadata
 	```
-4. Generate images from metadata
+6. Generate images from metadata
 	```
 	nftgen.py --project example --config config.yaml --generate-images
 	```
-4. Combine assets, which copies the images and metadata into one folder
+7. Combine assets, which copies the images and metadata into one folder
 	```
 	nftgen.py --project example --config config.yaml --combine-assets
 	```
 
 You must have `solana-keygen` available if you want to generate the environment automatically:
 
-4. Create react env for frontend
+1. Create react env for frontend
 	```
 	nftgen.py --project example --config config.yaml --react-env --react-env-start-date "01 Jan 31 12:00:00 GMT" --react-env-keypair ~/.config/solana/devnet-lightcycle.json
 	```
