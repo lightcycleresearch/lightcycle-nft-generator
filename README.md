@@ -36,9 +36,9 @@ Generate NFTs with metaplex standard
 	```
 2. Initialize project
 	```
-	nftgen.py --project example --config config.yaml --yamltialize
+	nftgen.py --project example --config config.yaml --initialize
 	```
-3. Add your images to the projects/example/images/ folder.  In the examples, we've included two
+3. Add your images to the projects/example/traits/ folders that were created by the previous command
 4. Generate metadata
 	```
 	nftgen.py --project example --config config.yaml --generate-metadata
@@ -58,3 +58,4 @@ You must have `solana-keygen` available if you want to generate the environment 
 	```
 	nftgen.py --project example --config config.yaml --react-env --react-env-start-date "01 Jan 31 12:00:00 GMT" --react-env-keypair ~/.config/solana/devnet-lightcycle.json
 	```
+Note: there is a Makefile for convenience, update the environmental variables before using
