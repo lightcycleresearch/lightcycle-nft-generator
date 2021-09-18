@@ -64,6 +64,11 @@ def make_args():
         help="default is now, format is: 'DD MMM YYYY HH:MM:SS GMT'",
     )
     parser.add_argument(
+        "--react-env-candy-machine-id",
+        action="store",
+        help="candy machine address from 'metaplex create_candy_machine'",
+    )
+    parser.add_argument(
         "--override-treasury-address",
         action="store",
         metavar="KEYPAIR",
@@ -308,20 +313,27 @@ def main():
             copyfile(metadata_source, metadata_dest)
 
     if args.react_env:
-
         react_env_dict = {}
+
+        if not args.react_env_candy_machine_id:
+            raise ValueError("--react-env-candy-machine-id required")
+        react_env_dict["REACT_APP_CANDY_MACHINE_ID"] = args.react_env_candy_machine_id
 
         # devnet/mainnet
         if args.env == "devnet":
-            fname = "devnet-temp"
             react_env_dict[
                 "REACT_APP_SOLANA_RPC_HOST"
             ] = "https://explorer-api.devnet.solana.com"
+        elif args.env == "mainnet-beta":
+            react_env_dict[
+                "REACT_APP_SOLANA_RPC_HOST"
+            ] = "https://api.mainnet-beta.solana.com"
         else:
             raise NotImplementedError
         react_env_dict["REACT_APP_SOLANA_NETWORK"] = args.env
 
         # program config
+        fname = f"{args.env}-temp"
         fpath = os.path.join(project_fdpath, ".cache", fname)
         try:
             with open(fpath, "r", encoding="utf-8") as f:
@@ -332,9 +344,6 @@ def main():
         else:
             program_config = su.program_config_from_cache(payload)
             react_env_dict["REACT_APP_CANDY_MACHINE_CONFIG"] = program_config
-
-        # candy machine ID
-        react_env_dict["REACT_APP_CANDY_MACHINE_ID"] = "REPLACEME"
 
         # start date
         if args.react_env_start_date:
