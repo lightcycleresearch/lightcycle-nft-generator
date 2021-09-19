@@ -64,6 +64,11 @@ def make_args():
         help="default is now, format is: 'DD MMM YYYY HH:MM:SS GMT'",
     )
     parser.add_argument(
+        "--react-env-candy-machine-id",
+        action="store",
+        help="candy machine address from 'metaplex create_candy_machine'",
+    )
+    parser.add_argument(
         "--override-treasury-address",
         action="store",
         metavar="KEYPAIR",
@@ -191,7 +196,6 @@ def main():
             metadata["image"] = image_fname
             metadata["name"] = f"{name_prefix} #{token_num}"
             metadata["properties"]["files"][0]["uri"] = image_fname
-            logger.info(f"Generating metadata for token {token_num} -> {metadata}")
             metadata["attributes"] = su.generate_random_attributes(
                 traits=config[project_name]["traits"]
             )
@@ -200,10 +204,11 @@ def main():
             metadata_fpath = os.path.join(project_fdpath, "metadata", metadata_fname)
             if os.path.exists(metadata_fpath) and not args.overwrite:
                 logger.warning(
-                    f"Already exists. You must pass --overwrite to overwrite"
+                    f"{metadata_fname} already exists. You must pass --overwrite to overwrite"
                 )
                 continue
 
+            logger.info(f"Generating metadata for token {token_num} -> {metadata}")
             logger.info(f"Creating {metadata_fpath}")
             with open(metadata_fpath, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=4)
@@ -224,10 +229,11 @@ def main():
         for i, fname in enumerate(fnames):
             assert i == int(fname.split(".")[0])
 
-            dest_img_fpath = os.path.join(images_fdpath, f"{i}.png")
+            img_fname = f"{i}.png"
+            dest_img_fpath = os.path.join(images_fdpath, img_fname)
             if os.path.exists(dest_img_fpath) and not args.overwrite:
                 logger.warning(
-                    f"Already exists. You must pass --overwrite to overwrite"
+                    f"{img_fname} already exists. You must pass --overwrite to overwrite"
                 )
                 continue
 
@@ -282,7 +288,6 @@ def main():
             pass
 
         for token_num in range(0, num_tokens):
-            logger.info(f"Combining assets for {token_num}")
 
             # source
             image_fname = f"{token_num}.png"
@@ -298,29 +303,37 @@ def main():
                 os.path.exists(image_dest) or os.path.exists(metadata_dest)
             ):
                 logger.warning(
-                    f"Already exists. You must pass --overwrite to overwrite"
+                    f"{image_fname} or {metadata_fname} already exist. You must pass --overwrite to overwrite"
                 )
                 continue
 
+            logger.info(f"Combining assets for {token_num}")
             # copy to assets
             copyfile(image_source, image_dest)
             copyfile(metadata_source, metadata_dest)
 
     if args.react_env:
-
         react_env_dict = {}
+
+        if not args.react_env_candy_machine_id:
+            raise ValueError("--react-env-candy-machine-id required")
+        react_env_dict["REACT_APP_CANDY_MACHINE_ID"] = args.react_env_candy_machine_id
 
         # devnet/mainnet
         if args.env == "devnet":
-            fname = "devnet-temp"
             react_env_dict[
                 "REACT_APP_SOLANA_RPC_HOST"
             ] = "https://explorer-api.devnet.solana.com"
+        elif args.env == "mainnet-beta":
+            react_env_dict[
+                "REACT_APP_SOLANA_RPC_HOST"
+            ] = "https://api.mainnet-beta.solana.com"
         else:
             raise NotImplementedError
         react_env_dict["REACT_APP_SOLANA_NETWORK"] = args.env
 
         # program config
+        fname = f"{args.env}-temp"
         fpath = os.path.join(project_fdpath, ".cache", fname)
         try:
             with open(fpath, "r", encoding="utf-8") as f:
@@ -331,9 +344,6 @@ def main():
         else:
             program_config = su.program_config_from_cache(payload)
             react_env_dict["REACT_APP_CANDY_MACHINE_CONFIG"] = program_config
-
-        # candy machine ID
-        react_env_dict["REACT_APP_CANDY_MACHINE_ID"] = "REPLACEME"
 
         # start date
         if args.react_env_start_date:
