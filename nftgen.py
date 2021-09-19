@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from shutil import copyfile
 import json
 import os
+import re
 import sys
 
 # third-party
@@ -220,7 +221,9 @@ def main():
         traits_fdpath = os.path.join(BASE_DIR, "projects", project_name, "traits")
         fnames = os.listdir(metadata_fdpath)
         fnames = [x for x in fnames if ".json" in x]
-        fnames.sort()
+        # sort as numeric and not str
+        fnames.sort(key=lambda f: int(re.sub("\D", "", f)))
+
         num_tokens = settings["num_tokens"]
         if len(fnames) != num_tokens:
             logger.error(f"🔴invalid number of files in metadata, need {num_tokens}")
