@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from pprint import pformat
+from shutil import copyfile
 import json
 import os
 import random
@@ -311,3 +312,41 @@ def generate_images_project(config, project_name, overwrite=False):
             layer = Image.open(img_fpath)
             img.paste(layer, (0, 0), layer)
         img.save(dest_img_fpath, "PNG")
+
+
+def combine_assets_project(config, project_name, overwrite=False):
+    # paths
+    project_fdpath = get_project_fdpath(project_name)
+    metadata_fdpath = os.path.join(project_fdpath, "metadata")
+    images_fdpath = os.path.join(project_fdpath, "images")
+    assets_fdpath = os.path.join(project_fdpath, "assets")
+
+    try:
+        os.makedirs(assets_fdpath)
+    except FileExistsError:
+        pass
+
+    for token_num in range(0, num_tokens):
+
+        # source
+        image_fname = f"{token_num}.png"
+        metadata_fname = f"{token_num}.json"
+
+        image_source = os.path.join(images_fdpath, image_fname)
+        metadata_source = os.path.join(metadata_fdpath, metadata_fname)
+
+        image_dest = os.path.join(assets_fdpath, image_fname)
+        metadata_dest = os.path.join(assets_fdpath, metadata_fname)
+
+        if not args.overwrite and (
+            os.path.exists(image_dest) or os.path.exists(metadata_dest)
+        ):
+            logger.warning(
+                f"{image_fname} or {metadata_fname} already exist. You must pass --overwrite to overwrite"
+            )
+            continue
+
+        logger.info(f"Combining assets for {token_num}")
+        # copy to assets
+        copyfile(image_source, image_dest)
+        copyfile(metadata_source, metadata_dest)

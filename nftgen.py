@@ -142,35 +142,9 @@ def main():
     # assets
     # ------
     if args.combine_assets:
-        try:
-            os.makedirs(assets_fdpath)
-        except FileExistsError:
-            pass
-
-        for token_num in range(0, num_tokens):
-
-            # source
-            image_fname = f"{token_num}.png"
-            metadata_fname = f"{token_num}.json"
-
-            image_source = os.path.join(images_fdpath, image_fname)
-            metadata_source = os.path.join(metadata_fdpath, metadata_fname)
-
-            image_dest = os.path.join(assets_fdpath, image_fname)
-            metadata_dest = os.path.join(assets_fdpath, metadata_fname)
-
-            if not args.overwrite and (
-                os.path.exists(image_dest) or os.path.exists(metadata_dest)
-            ):
-                logger.warning(
-                    f"{image_fname} or {metadata_fname} already exist. You must pass --overwrite to overwrite"
-                )
-                continue
-
-            logger.info(f"Combining assets for {token_num}")
-            # copy to assets
-            copyfile(image_source, image_dest)
-            copyfile(metadata_source, metadata_dest)
+        su.combine_assets_project(
+            config=config, project_name=args.project, overwrite=args.overwrite
+        )
 
     if args.react_env:
         react_env_dict = {}
