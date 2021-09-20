@@ -142,12 +142,13 @@ def solana_keygen_pubkey(keypair=None):
     return output.decode("utf-8")
 
 
-def get_project_fdpath(project_name):
-    return os.path.join(BASE_DIR, "projects", project_name)
+def get_project_fdpath(config, project_name):
+    working_dir = config[project_name]["settings"]["working_dir"]
+    return os.path.join(BASE_DIR, working_dir, project_name)
 
 
 def initialize_project_folder(config, project_name):
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
     for subfolder in ["metadata", "images", "assets"]:
         try:
@@ -156,6 +157,7 @@ def initialize_project_folder(config, project_name):
             pass
 
     trait_types = config[project_name]["traits"]["trait_types"]
+    trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
     for trait_type in trait_types:
         trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
         try:
@@ -183,7 +185,7 @@ def initialize_project_folder(config, project_name):
 
 
 def generate_metadata_project(config, project_name, overwrite=False):
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     settings = config[project_name]["settings"]
     num_tokens = int(settings["num_tokens"])
     creator_address = settings["address"]
@@ -248,7 +250,7 @@ def generate_metadata_project(config, project_name, overwrite=False):
 def generate_images_project(config, project_name, overwrite=False):
 
     # paths
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     traits_fdpath = os.path.join(project_fdpath, "traits")
     metadata_fdpath = os.path.join(project_fdpath, "metadata")
     images_fdpath = os.path.join(project_fdpath, "images")
@@ -316,7 +318,7 @@ def generate_images_project(config, project_name, overwrite=False):
 
 def combine_assets_project(config, project_name, overwrite=False):
     # paths
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     metadata_fdpath = os.path.join(project_fdpath, "metadata")
     images_fdpath = os.path.join(project_fdpath, "images")
     assets_fdpath = os.path.join(project_fdpath, "assets")
@@ -381,7 +383,7 @@ def react_env_for_project(
 
     # program config
     fname = f"{env}-temp"
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     fpath = os.path.join(project_fdpath, ".cache", fname)
     try:
         with open(fpath, "r", encoding="utf-8") as f:
