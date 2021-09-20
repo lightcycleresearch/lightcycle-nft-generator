@@ -3,7 +3,11 @@ from pprint import pformat
 import json
 import os
 import random
+import re
 import subprocess
+
+# third-party
+from PIL import Image
 
 # logging
 import logging
@@ -238,3 +242,72 @@ def generate_metadata_project(config, project_name, overwrite=False):
         logger.info(f"Creating {metadata_fpath}")
         with open(metadata_fpath, "w", encoding="utf-8") as f:
             json.dump(metadata, f, indent=4)
+
+
+def generate_images_project(config, project_name, overwrite=False):
+
+    # paths
+    project_fdpath = get_project_fdpath(project_name)
+    traits_fdpath = os.path.join(project_fdpath, "traits")
+    metadata_fdpath = os.path.join(project_fdpath, "metadata")
+    images_fdpath = os.path.join(project_fdpath, "images")
+
+    # sort metadata fnames as numeric and not str, so 0,1,2,3 instead of 0,10,11,12
+    fnames = os.listdir(metadata_fdpath)
+    fnames = [x for x in fnames if ".json" in x]
+    fnames.sort(key=lambda f: int(re.sub("\D", "", f)))
+
+    # validation
+    num_tokens = config[project_name]["settings"]["num_tokens"]
+    if len(fnames) != num_tokens:
+        logger.error(f"🔴invalid number of files in metadata, need {num_tokens}")
+        sys.exit(1)
+
+    for i, fname in enumerate(fnames):
+        assert i == int(fname.split(".")[0])
+
+        img_fname = f"{i}.png"
+        dest_img_fpath = os.path.join(images_fdpath, img_fname)
+        if os.path.exists(dest_img_fpath) and not overwrite:
+            logger.warning(
+                f"{img_fname} already exists. You must pass --overwrite to overwrite"
+            )
+            continue
+
+        logger.info(f"{i:05} \t Generating image from {fname}")
+        fpath = os.path.join(metadata_fdpath, fname)
+        with open(fpath, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        flattened = flatten_nft_attributes(payload["attributes"])
+        logger.debug(flattened)
+
+        # use order to create
+        try:
+            restrictions = config[project_name]["traits"]["trait_restrictions"]
+        except KeyError:
+            restrictions = []
+
+        img_fpaths = []
+        for ttype in config[project_name]["traits"]["trait_types"]:
+            source_img_fname = flattened[ttype] + ".png"
+            if restrictions and ttype in restrictions:
+                source_img_fpath = os.path.join(traits_fdpath, ttype, source_img_fname)
+            elif restrictions and ttype not in restrictions:
+                restriction_fdname = flattened[restrictions[0]]
+                source_img_fpath = os.path.join(
+                    traits_fdpath, ttype, restriction_fdname, source_img_fname
+                )
+            else:
+                source_img_fpath = os.path.join(traits_fdpath, ttype, source_img_fname)
+            logger.info(f"{ttype=} {source_img_fname} {source_img_fpath}")
+
+            img_fpaths.append(source_img_fpath)
+        logger.debug(img_fpaths)
+        img = None
+        for img_fpath in img_fpaths:
+            if img is None:
+                img = Image.open(img_fpath)
+                continue
+            layer = Image.open(img_fpath)
+            img.paste(layer, (0, 0), layer)
+        img.save(dest_img_fpath, "PNG")
