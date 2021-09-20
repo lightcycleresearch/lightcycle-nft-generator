@@ -127,57 +127,9 @@ def main():
     # generate
     # --------
     if args.generate_metadata:
-
-        logger.info(f"Generating metadata for {num_tokens}")
-        TEMPLATE = {
-            "attributes": [
-                # {"trait_type": "color", "value": "white"},
-                # {"trait_type": "pattern", "value": "random"},
-            ],
-            "collection": collection,
-            "description": description,
-            "image": None,
-            "name": f"{name_prefix} #0",
-            "properties": {
-                "category": "image",
-                "creators": [
-                    {
-                        "address": creator_address,
-                        "share": 100,
-                    }
-                ],
-                "files": [
-                    {
-                        "type": "image/png",
-                        "uri": None,
-                    }
-                ],
-            },
-            "seller_fee_basis_points": seller_fee_basis_points,
-            "symbol": symbol,
-        }
-        for token_num in range(0, num_tokens):
-            metadata = TEMPLATE.copy()
-            image_fname = f"{token_num}.png"
-            metadata["image"] = image_fname
-            metadata["name"] = f"{name_prefix} #{token_num}"
-            metadata["properties"]["files"][0]["uri"] = image_fname
-            metadata["attributes"] = su.generate_random_attributes(
-                traits=config[project_name]["traits"]
-            )
-
-            metadata_fname = f"{token_num}.json"
-            metadata_fpath = os.path.join(project_fdpath, "metadata", metadata_fname)
-            if os.path.exists(metadata_fpath) and not args.overwrite:
-                logger.warning(
-                    f"{metadata_fname} already exists. You must pass --overwrite to overwrite"
-                )
-                continue
-
-            logger.info(f"Generating metadata for token {token_num} -> {metadata}")
-            logger.info(f"Creating {metadata_fpath}")
-            with open(metadata_fpath, "w", encoding="utf-8") as f:
-                json.dump(metadata, f, indent=4)
+        su.generate_metadata_project(
+            config=config, project_name=args.project, overwrite=args.overwrite
+        )
 
     # images
     # ------
