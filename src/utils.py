@@ -40,12 +40,7 @@ class TokenTool:
                     "share": 100,
                 }
             ],
-            "files": [
-                {
-                    "type": "image/png",
-                    "uri": None,
-                }
-            ],
+            "files": None,
         },
         "seller_fee_basis_points": None,
         "symbol": None,
@@ -127,7 +122,14 @@ class TokenTool:
         image_fname = f"{token_num}.png"
         metadata["image"] = image_fname
         metadata["name"] = f"{name_prefix} #{token_num}"
-        metadata["properties"]["files"][0]["uri"] = image_fname
+
+        # new files list
+        metadata["properties"]["files"] = []
+        metadata["properties"]["files"].append(
+            {"type": "image/png", "uri": image_fname}
+        )
+
+        # new attributes list
         metadata["attributes"] = []
         for trait_type, trait_value in attributes.items():
             metadata["attributes"].append(
@@ -164,6 +166,36 @@ class TokenTool:
             )
             metadatas.append(md)
         return metadatas
+
+    def save_metadatas(self, metadatas, overwrite=False):
+        """
+        Args:
+            metadatas (list of metadata): metadata metaplex formt
+        """
+        project_fdpath = get_project_fdpath(
+            config=self.config, project_name=self.project_name
+        )
+        metadata_fdpath = os.path.join(project_fdpath, "metadata")
+        for md in metadatas:
+            token_name = md["name"]
+            token_num = int(token_name.split("#")[-1])
+
+            # validation
+            image_fname = md["image"]
+            assert token_num == int(image_fname.split(".")[0])
+            uri_fname = md["properties"]["files"][0]["uri"]
+            assert token_num == int(uri_fname.split(".")[0])
+
+            # generate
+            metadata_fname = f"{token_num}.json"
+            fpath = os.path.join(metadata_fdpath, metadata_fname)
+            if os.path.exists(fpath) and not overwrite:
+                logger.warning(f"Skip existing {metadata_fname}")
+                continue
+
+            with open(fpath, "w", encoding="utf-8") as f:
+                json.dump(md, f, indent=4)
+            logger.info(f"Saving {token_name} -> {metadata_fname}")
 
 
 def validate_config(config, project_name):
@@ -625,7 +657,6 @@ def react_env_for_project(
 
 
 def generate_metadata_project_new(config, project_name, overwrite=False):
-    mmd = TokenTool(config=config, project_name=project_name)
-    metadatas = mmd.generate(0, 2)
-    for md in metadatas:
-        logger.info(pformat(md))
+    tt = TokenTool(config=config, project_name=project_name)
+    metadatas = tt.generate(0, 2)
+    tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
