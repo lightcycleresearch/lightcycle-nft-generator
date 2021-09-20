@@ -191,14 +191,45 @@ def create_scaffolding_restricted(project_fdpath, traits):
                 pass
 
 
+def ensure_fdpath(fdpath):
+    try:
+        os.makedirs(fdpath)
+    except FileExistsError:
+        pass
+
+
+def create_scaffolding_combo(project_fdpath, traits):
+    """
+    Args:
+        traits (dict): config[project_name]["traits"]
+    """
+
+    assert traits["trait_algorithm"] == "combo"
+
+    fdpaths = []
+    for trait_type in traits["trait_types"]:
+
+        # hidden
+        if trait_type in traits["trait_hidden"]:
+            logger.info(f"skip hidden {trait_type=}")
+            continue
+
+        # sublevels
+        trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
+        sublevels = traits["trait_values"][trait_type].keys()
+        for sublevel in sublevels:
+            fdpaths.append(os.path.join(trait_type_fdpath, sublevel))
+
+    # create fdpaths
+    for fdpath in fdpaths:
+        ensure_fdpath(fdpath)
+
+
 def initialize_project_folder(config, project_name):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
     for subfolder in ["metadata", "images", "assets"]:
-        try:
-            os.makedirs(os.path.join(project_fdpath, subfolder))
-        except FileExistsError:
-            pass
+        ensure_fdpath(os.path.join(project_fdpath, subfolder))
 
     trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
     traits = config[project_name]["traits"]
@@ -206,6 +237,8 @@ def initialize_project_folder(config, project_name):
         create_scaffolding_basic(project_fdpath=project_fdpath, traits=traits)
     elif trait_algorithm == "restricted":
         create_scaffolding_restricted(project_fdpath=project_fdpath, traits=traits)
+    elif trait_algorithm == "combo":
+        create_scaffolding_combo(project_fdpath=project_fdpath, traits=traits)
     else:
         raise ValueError(f"invalid {trait_algorithm=}")
     logger.info(f"DONE!  Please place your images in {project_fdpath}/traits")
