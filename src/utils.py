@@ -142,12 +142,57 @@ def solana_keygen_pubkey(keypair=None):
     return output.decode("utf-8")
 
 
-def get_project_fdpath(project_name):
-    return os.path.join(BASE_DIR, "projects", project_name)
+def get_project_fdpath(config, project_name):
+    working_dir = config[project_name]["settings"]["working_dir"]
+    return os.path.join(BASE_DIR, working_dir, project_name)
+
+
+def create_scaffolding_basic(project_fdpath, traits):
+    """
+    Args:
+        traits (dict): config[project_name]["traits"]
+    """
+
+    assert traits["trait_algorithm"] == "basic"
+    for trait_type in traits["trait_types"]:
+        trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
+        try:
+            os.makedirs(trait_type_fdpath)
+        except FileExistsError:
+            pass
+
+
+def create_scaffolding_restricted(project_fdpath, traits):
+    """
+    Args:
+        traits (dict): config[project_name]["traits"]
+    """
+
+    assert traits["trait_algorithm"] == "restricted"
+    for trait_type in traits["trait_types"]:
+        trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
+        trait_restrictions = traits["trait_restrictions"]
+
+        # restrictions are only one level
+        if trait_type in trait_restrictions:
+            try:
+                os.makedirs(trait_type_fdpath)
+            except FileExistsError:
+                pass
+            continue
+
+        # if it has restrictions, then more levels
+        sub_restrictions = traits["trait_values"][trait_type].keys()
+        for sub_restriction in sub_restrictions:
+            trait_fdpath = os.path.join(trait_type_fdpath, sub_restriction)
+            try:
+                os.makedirs(trait_fdpath)
+            except FileExistsError:
+                pass
 
 
 def initialize_project_folder(config, project_name):
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
     for subfolder in ["metadata", "images", "assets"]:
         try:
@@ -155,35 +200,19 @@ def initialize_project_folder(config, project_name):
         except FileExistsError:
             pass
 
-    trait_types = config[project_name]["traits"]["trait_types"]
-    for trait_type in trait_types:
-        trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
-        try:
-            trait_restrictions = config[project_name]["traits"]["trait_restrictions"]
-        except KeyError:
-            trait_restrictions = []
-        # restrictions are only one level
-        if not trait_restrictions or trait_type in trait_restrictions:
-            try:
-                os.makedirs(trait_type_fdpath)
-            except FileExistsError:
-                pass
-        else:
-            # if it has restrictions, then more levels
-            trait_type_restrictions = config[project_name]["traits"]["trait_values"][
-                trait_type
-            ].keys()
-            for trait_type_restriction in trait_type_restrictions:
-                trait_fdpath = os.path.join(trait_type_fdpath, trait_type_restriction)
-                try:
-                    os.makedirs(trait_fdpath)
-                except FileExistsError:
-                    pass
+    trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
+    traits = config[project_name]["traits"]
+    if trait_algorithm == "basic":
+        create_scaffolding_basic(project_fdpath=project_fdpath, traits=traits)
+    elif trait_algorithm == "restricted":
+        create_scaffolding_restricted(project_fdpath=project_fdpath, traits=traits)
+    else:
+        raise ValueError(f"invalid {trait_algorithm=}")
     logger.info(f"DONE!  Please place your images in {project_fdpath}/traits")
 
 
 def generate_metadata_project(config, project_name, overwrite=False):
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     settings = config[project_name]["settings"]
     num_tokens = int(settings["num_tokens"])
     creator_address = settings["address"]
@@ -248,7 +277,7 @@ def generate_metadata_project(config, project_name, overwrite=False):
 def generate_images_project(config, project_name, overwrite=False):
 
     # paths
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     traits_fdpath = os.path.join(project_fdpath, "traits")
     metadata_fdpath = os.path.join(project_fdpath, "metadata")
     images_fdpath = os.path.join(project_fdpath, "images")
@@ -316,7 +345,7 @@ def generate_images_project(config, project_name, overwrite=False):
 
 def combine_assets_project(config, project_name, overwrite=False):
     # paths
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     metadata_fdpath = os.path.join(project_fdpath, "metadata")
     images_fdpath = os.path.join(project_fdpath, "images")
     assets_fdpath = os.path.join(project_fdpath, "assets")
@@ -381,7 +410,7 @@ def react_env_for_project(
 
     # program config
     fname = f"{env}-temp"
-    project_fdpath = get_project_fdpath(project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     fpath = os.path.join(project_fdpath, ".cache", fname)
     try:
         with open(fpath, "r", encoding="utf-8") as f:

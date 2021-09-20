@@ -1,13 +1,7 @@
 #!/usr/bin/env python3
-from datetime import datetime, timezone
-from shutil import copyfile
-import json
 import os
-import re
-import sys
 
 # third-party
-from PIL import Image
 import yaml
 
 # utils
@@ -96,28 +90,6 @@ def main():
     with open(config_fpath, "r", encoding="utf-8") as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
     su.validate_config(config=config, project_name=args.project)
-
-    # validation
-    # ----------
-    project_fdpath = os.path.join(BASE_DIR, "projects", args.project)
-
-    # parse config
-    # ------------
-    project_name = args.project
-    settings = config[project_name]["settings"]
-    num_tokens = int(settings["num_tokens"])
-    creator_address = settings["address"]
-    name_prefix = settings["name_prefix"]
-    description = settings["description"]
-    symbol = settings["symbol"]
-    collection = settings["collection"]
-    seller_fee_basis_points = int(settings["seller_fee_basis_points"])
-    logger.debug(config[project_name]["traits"])
-
-    # folders
-    metadata_fdpath = os.path.join(BASE_DIR, "projects", project_name, "metadata")
-    images_fdpath = os.path.join(BASE_DIR, "projects", project_name, "images")
-    assets_fdpath = os.path.join(BASE_DIR, "projects", project_name, "assets")
 
     # initialize
     # ----------
