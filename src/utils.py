@@ -171,7 +171,7 @@ def create_scaffolding_restricted(project_fdpath, traits):
     assert traits["trait_algorithm"] == "restricted"
     for trait_type in traits["trait_types"]:
         trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
-        trait_restrictions = config[project_name]["traits"]["trait_restrictions"]
+        trait_restrictions = traits["trait_restrictions"]
 
         # restrictions are only one level
         if trait_type in trait_restrictions:
@@ -179,17 +179,16 @@ def create_scaffolding_restricted(project_fdpath, traits):
                 os.makedirs(trait_type_fdpath)
             except FileExistsError:
                 pass
-        else:
-            # if it has restrictions, then more levels
-            trait_type_restrictions = config[project_name]["traits"]["trait_values"][
-                trait_type
-            ].keys()
-            for trait_type_restriction in trait_type_restrictions:
-                trait_fdpath = os.path.join(trait_type_fdpath, trait_type_restriction)
-                try:
-                    os.makedirs(trait_fdpath)
-                except FileExistsError:
-                    pass
+            continue
+
+        # if it has restrictions, then more levels
+        sub_restrictions = traits["trait_values"][trait_type].keys()
+        for sub_restriction in sub_restrictions:
+            trait_fdpath = os.path.join(trait_type_fdpath, sub_restriction)
+            try:
+                os.makedirs(trait_fdpath)
+            except FileExistsError:
+                pass
 
 
 def initialize_project_folder(config, project_name):
