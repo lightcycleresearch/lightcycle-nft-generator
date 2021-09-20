@@ -23,6 +23,35 @@ class ValidationException(Exception):
     pass
 
 
+class Metadata:
+    TEMPLATE = {
+        "attributes": [
+            # {"trait_type": "color", "value": "white"},
+        ],
+        "collection": None,
+        "description": None,
+        "image": None,
+        "name": None,
+        "properties": {
+            "category": "image",
+            "creators": [
+                {
+                    "address": None,
+                    "share": 100,
+                }
+            ],
+            "files": [
+                {
+                    "type": "image/png",
+                    "uri": None,
+                }
+            ],
+        },
+        "seller_fee_basis_points": None,
+        "symbol": None,
+    }
+
+
 def validate_config(config, project_name):
     try:
         settings = config[project_name]
