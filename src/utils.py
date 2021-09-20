@@ -103,6 +103,43 @@ class MetaplexMetadata:
         logger.info(pformat(combo))
         return combo
 
+    def set_project_values(self, metadata):
+        s = self.config[self.project_name]['settings']
+
+        # collection
+        assert not metadata['collection']
+        assert not metadata['description']
+        assert not metadata['symbol']
+        metadata['collection'] = s['collection']
+        metadata['description'] = s['description']
+        metadata['symbol'] = s['symbol']
+
+        # addresses
+        assert len(metadata['properties']['creators']) == 1
+        metadata['properties']['creators'][0]['address'] = s['address']
+
+
+    def token_metadata_from_attributes(self, token_num, attributes):
+        """
+        Args:
+            token_num (int): token number
+            attributes (dict): key=trait_type, value=trait_value
+        """ 
+        assert token_num >= 0
+
+        metadata = self.TEMPLATE.copy()
+        self.set_project_values(metadata)
+
+        # overwrite token specific placeholders
+        metadata["image"] = f"{token_num}.png"
+        metadata["name"] = f"{name_prefix} #{token_num}"
+        metadata["properties"]["files"][0]["uri"] = image_fname
+        for trait_type, trait_value in attributes.items():
+            metadata["attributes"].append(
+                {'trait_type': trait_type, 'trait_value': trait_value}
+            )
+
+        return metadata
 
 def validate_config(config, project_name):
     try:
