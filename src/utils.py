@@ -197,7 +197,7 @@ def generate_metadata_project(config, project_name, overwrite=False):
         "collection": collection,
         "description": description,
         "image": None,
-        "name": f"{name_prefix} #0",
+        "name": None,
         "properties": {
             "category": "image",
             "creators": [
