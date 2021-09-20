@@ -104,42 +104,51 @@ class MetaplexMetadata:
         return combo
 
     def set_project_values(self, metadata):
-        s = self.config[self.project_name]['settings']
+        s = self.config[self.project_name]["settings"]
 
         # collection
-        assert not metadata['collection']
-        assert not metadata['description']
-        assert not metadata['symbol']
-        metadata['collection'] = s['collection']
-        metadata['description'] = s['description']
-        metadata['symbol'] = s['symbol']
+        assert not metadata["collection"]
+        assert not metadata["description"]
+        assert not metadata["symbol"]
+        metadata["collection"] = s["collection"]
+        metadata["description"] = s["description"]
+        metadata["symbol"] = s["symbol"]
+        metadata["seller_fee_basis_points"] = s["seller_fee_basis_points"]
 
         # addresses
-        assert len(metadata['properties']['creators']) == 1
-        metadata['properties']['creators'][0]['address'] = s['address']
+        assert len(metadata["properties"]["creators"]) == 1
+        metadata["properties"]["creators"][0]["address"] = s["address"]
 
+    def set_token_values(self, metadata, token_num, attributes):
+        """overwrite token specific placeholders"""
+        s = self.config[self.project_name]["settings"]
+        name_prefix = s["name_prefix"]
+
+        image_fname = f"{token_num}.png"
+        metadata["image"] = image_fname
+        metadata["name"] = f"{name_prefix} #{token_num}"
+        metadata["properties"]["files"][0]["uri"] = image_fname
+        for trait_type, trait_value in attributes.items():
+            metadata["attributes"].append(
+                {"trait_type": trait_type, "trait_value": trait_value}
+            )
 
     def token_metadata_from_attributes(self, token_num, attributes):
         """
         Args:
             token_num (int): token number
             attributes (dict): key=trait_type, value=trait_value
-        """ 
+        """
         assert token_num >= 0
 
         metadata = self.TEMPLATE.copy()
         self.set_project_values(metadata)
-
-        # overwrite token specific placeholders
-        metadata["image"] = f"{token_num}.png"
-        metadata["name"] = f"{name_prefix} #{token_num}"
-        metadata["properties"]["files"][0]["uri"] = image_fname
-        for trait_type, trait_value in attributes.items():
-            metadata["attributes"].append(
-                {'trait_type': trait_type, 'trait_value': trait_value}
-            )
+        self.set_token_values(
+            metadata=metadata, token_num=token_num, attributes=attributes
+        )
 
         return metadata
+
 
 def validate_config(config, project_name):
     try:
@@ -601,4 +610,6 @@ def react_env_for_project(
 
 def generate_metadata_project_new(config, project_name, overwrite=False):
     mmd = MetaplexMetadata(config=config, project_name=project_name)
-    print(mmd.random_attributes())
+    attributes = mmd.random_attributes()
+    md = mmd.token_metadata_from_attributes(token_num=0, attributes=attributes)
+    logger.info(pformat(md))
