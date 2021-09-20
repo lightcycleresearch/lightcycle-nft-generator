@@ -98,8 +98,10 @@ class MetaplexMetadata:
                 selected_sublevels[trait] = selections[0]
         logger.info(pformat(selected_sublevels))
 
+        # combine
         combo = {**selected_wildcards, **selected_sublevels}
         logger.info(pformat(combo))
+        return combo
 
 
 def validate_config(config, project_name):
