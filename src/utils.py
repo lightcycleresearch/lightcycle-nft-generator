@@ -161,9 +161,11 @@ class TokenTool:
         metadatas = []
         for token_num in range(start, end):
             attributes = self.random_attributes()
+            logger.info(f"Genearting {token_num}")
             md = self.token_metadata_from_attributes(
                 token_num=token_num, attributes=attributes
             )
+            logger.info(pformat(md))
             metadatas.append(md)
         return metadatas
 
