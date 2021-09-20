@@ -122,42 +122,7 @@ def main():
     # initialize
     # ----------
     if args.initialize:
-        logger.info(f"Initializing {project_fdpath} folders")
-        for subfolder in ["metadata", "images", "assets"]:
-            try:
-                os.makedirs(os.path.join(project_fdpath, subfolder))
-            except FileExistsError:
-                pass
-
-        trait_types = config[project_name]["traits"]["trait_types"]
-        for trait_type in trait_types:
-            trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
-            try:
-                trait_restrictions = config[project_name]["traits"][
-                    "trait_restrictions"
-                ]
-            except KeyError:
-                trait_restrictions = []
-            # restrictions are only one level
-            if not trait_restrictions or trait_type in trait_restrictions:
-                try:
-                    os.makedirs(trait_type_fdpath)
-                except FileExistsError:
-                    pass
-            else:
-                # if it has restrictions, then more levels
-                trait_type_restrictions = config[project_name]["traits"][
-                    "trait_values"
-                ][trait_type].keys()
-                for trait_type_restriction in trait_type_restrictions:
-                    trait_fdpath = os.path.join(
-                        trait_type_fdpath, trait_type_restriction
-                    )
-                    try:
-                        os.makedirs(trait_fdpath)
-                    except FileExistsError:
-                        pass
-        logger.info(f"DONE!  Please place your images in {project_fdpath}/traits")
+        su.initialize_project_folder(config=config, project_name=args.project)
 
     # generate
     # --------
