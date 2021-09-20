@@ -23,7 +23,7 @@ class ValidationException(Exception):
     pass
 
 
-class Metadata:
+class MetaplexMetadata:
     TEMPLATE = {
         "attributes": [
             # {"trait_type": "color", "value": "white"},
@@ -50,6 +50,9 @@ class Metadata:
         "seller_fee_basis_points": None,
         "symbol": None,
     }
+
+    def __init__(self):
+        pass
 
 
 def validate_config(config, project_name):
@@ -508,3 +511,7 @@ def react_env_for_project(
     # stdout
     for k, v in react_env_dict.items():
         print(f"{k}={v}")
+
+
+def generate_metadata_project_new(config, project_name, overwrite=False):
+    pass
