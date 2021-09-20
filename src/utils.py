@@ -128,6 +128,7 @@ class MetaplexMetadata:
         metadata["image"] = image_fname
         metadata["name"] = f"{name_prefix} #{token_num}"
         metadata["properties"]["files"][0]["uri"] = image_fname
+        metadata["attributes"] = []
         for trait_type, trait_value in attributes.items():
             metadata["attributes"].append(
                 {"trait_type": trait_type, "trait_value": trait_value}
@@ -148,6 +149,21 @@ class MetaplexMetadata:
         )
 
         return metadata
+
+    def generate(self, start, end):
+        """
+        Args:
+            start (int): integer
+            end (int): integer
+        """
+        metadatas = []
+        for token_num in range(start, end):
+            attributes = self.random_attributes()
+            md = self.token_metadata_from_attributes(
+                token_num=token_num, attributes=attributes
+            )
+            metadatas.append(md)
+        return metadatas
 
 
 def validate_config(config, project_name):
@@ -610,6 +626,6 @@ def react_env_for_project(
 
 def generate_metadata_project_new(config, project_name, overwrite=False):
     mmd = MetaplexMetadata(config=config, project_name=project_name)
-    attributes = mmd.random_attributes()
-    md = mmd.token_metadata_from_attributes(token_num=0, attributes=attributes)
-    logger.info(pformat(md))
+    metadatas = mmd.generate(0, 2)
+    for md in metadatas:
+        logger.info(pformat(md))
