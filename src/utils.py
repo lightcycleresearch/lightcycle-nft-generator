@@ -147,25 +147,34 @@ def get_project_fdpath(config, project_name):
     return os.path.join(BASE_DIR, working_dir, project_name)
 
 
-def initialize_project_folder(config, project_name):
-    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
-    logger.info(f"Initializing {project_fdpath} folders")
-    for subfolder in ["metadata", "images", "assets"]:
+def create_scaffolding_basic(project_fdpath, traits):
+    """
+    Args:
+        traits (dict): config[project_name]["traits"]
+    """
+
+    assert traits["trait_algorithm"] == "basic"
+    for trait_type in traits["trait_types"]:
+        trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
         try:
-            os.makedirs(os.path.join(project_fdpath, subfolder))
+            os.makedirs(trait_type_fdpath)
         except FileExistsError:
             pass
 
-    trait_types = config[project_name]["traits"]["trait_types"]
-    trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
-    for trait_type in trait_types:
+
+def create_scaffolding_restricted(project_fdpath, traits):
+    """
+    Args:
+        traits (dict): config[project_name]["traits"]
+    """
+
+    assert traits["trait_algorithm"] == "restricted"
+    for trait_type in traits["trait_types"]:
         trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
-        try:
-            trait_restrictions = config[project_name]["traits"]["trait_restrictions"]
-        except KeyError:
-            trait_restrictions = []
+        trait_restrictions = config[project_name]["traits"]["trait_restrictions"]
+
         # restrictions are only one level
-        if not trait_restrictions or trait_type in trait_restrictions:
+        if trait_type in trait_restrictions:
             try:
                 os.makedirs(trait_type_fdpath)
             except FileExistsError:
@@ -181,6 +190,25 @@ def initialize_project_folder(config, project_name):
                     os.makedirs(trait_fdpath)
                 except FileExistsError:
                     pass
+
+
+def initialize_project_folder(config, project_name):
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
+    logger.info(f"Initializing {project_fdpath} folders")
+    for subfolder in ["metadata", "images", "assets"]:
+        try:
+            os.makedirs(os.path.join(project_fdpath, subfolder))
+        except FileExistsError:
+            pass
+
+    trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
+    traits = config[project_name]["traits"]
+    if trait_algorithm == "basic":
+        create_scaffolding_basic(project_fdpath=project_fdpath, traits=traits)
+    elif trait_algorithm == "restricted":
+        create_scaffolding_restricted(project_fdpath=project_fdpath, traits=traits)
+    else:
+        raise ValueError(f"invalid {trait_algorithm=}")
     logger.info(f"DONE!  Please place your images in {project_fdpath}/traits")
 
 
