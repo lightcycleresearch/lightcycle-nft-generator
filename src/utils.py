@@ -23,7 +23,7 @@ class ValidationException(Exception):
     pass
 
 
-class MetaplexMetadata:
+class TokenTool:
     TEMPLATE = {
         "attributes": [
             # {"trait_type": "color", "value": "white"},
@@ -625,7 +625,7 @@ def react_env_for_project(
 
 
 def generate_metadata_project_new(config, project_name, overwrite=False):
-    mmd = MetaplexMetadata(config=config, project_name=project_name)
+    mmd = TokenTool(config=config, project_name=project_name)
     metadatas = mmd.generate(0, 2)
     for md in metadatas:
         logger.info(pformat(md))
