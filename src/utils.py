@@ -350,3 +350,70 @@ def combine_assets_project(config, project_name, overwrite=False):
         # copy to assets
         copyfile(image_source, image_dest)
         copyfile(metadata_source, metadata_dest)
+
+
+def react_env_for_project(
+    config,
+    project_name,
+    react_env_candy_machine_id,
+    env="devnet",
+    react_env_start_date=None,
+    override_treasury_address=None,
+):
+    react_env_dict = {}
+
+    if not react_env_candy_machine_id:
+        raise ValueError("--react-env-candy-machine-id required")
+    react_env_dict["REACT_APP_CANDY_MACHINE_ID"] = react_env_candy_machine_id
+
+    # devnet/mainnet
+    if env == "devnet":
+        react_env_dict[
+            "REACT_APP_SOLANA_RPC_HOST"
+        ] = "https://explorer-api.devnet.solana.com"
+    elif env == "mainnet-beta":
+        react_env_dict[
+            "REACT_APP_SOLANA_RPC_HOST"
+        ] = "https://api.mainnet-beta.solana.com"
+    else:
+        raise NotImplementedError
+    react_env_dict["REACT_APP_SOLANA_NETWORK"] = env
+
+    # program config
+    fname = f"{env}-temp"
+    project_fdpath = get_project_fdpath(project_name)
+    fpath = os.path.join(project_fdpath, ".cache", fname)
+    try:
+        with open(fpath, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+    except FileNotFoundError:
+        logger.error(f"🔴You do not have a cache: {fpath}")
+        sys.exit()
+    else:
+        program_config = program_config_from_cache(payload)
+        react_env_dict["REACT_APP_CANDY_MACHINE_CONFIG"] = program_config
+
+    # start date
+    if react_env_start_date:
+        react_env_dict["REACT_APP_CANDY_START_DATE"] = start_date_to_timestamp(
+            react_env_start_date
+        )
+        react_env_dict["# Start Date "] = react_env_start_date
+    else:
+        now = datetime.now(timezone.utc)
+        logger.info(f"using timestamp: {now.isoformat()=}")
+        react_env_dict["REACT_APP_CANDY_START_DATE"] = int(now.timestamp())
+        react_env_dict["# Start Date"] = now.strftime("%d %b %Y %H:%M:%S GMT")
+
+    # treasury
+    creator_address = config[project_name]["settings"]["address"]
+    if override_treasury_address:
+        pubkey = su.solana_keygen_pubkey(override_treasury_address)
+        logger.info(f"overriding creator {creator_address} with {pubkey}")
+        react_env_dict["REACT_APP_TREASURY_ADDRESS"] = pubkey
+    else:
+        react_env_dict["REACT_APP_TREASURY_ADDRESS"] = creator_address
+
+    # stdout
+    for k, v in react_env_dict.items():
+        print(f"{k}={v}")

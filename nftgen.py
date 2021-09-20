@@ -146,60 +146,17 @@ def main():
             config=config, project_name=args.project, overwrite=args.overwrite
         )
 
+    # react env for frontend
+    # ----------------------
     if args.react_env:
-        react_env_dict = {}
-
-        if not args.react_env_candy_machine_id:
-            raise ValueError("--react-env-candy-machine-id required")
-        react_env_dict["REACT_APP_CANDY_MACHINE_ID"] = args.react_env_candy_machine_id
-
-        # devnet/mainnet
-        if args.env == "devnet":
-            react_env_dict[
-                "REACT_APP_SOLANA_RPC_HOST"
-            ] = "https://explorer-api.devnet.solana.com"
-        elif args.env == "mainnet-beta":
-            react_env_dict[
-                "REACT_APP_SOLANA_RPC_HOST"
-            ] = "https://api.mainnet-beta.solana.com"
-        else:
-            raise NotImplementedError
-        react_env_dict["REACT_APP_SOLANA_NETWORK"] = args.env
-
-        # program config
-        fname = f"{args.env}-temp"
-        fpath = os.path.join(project_fdpath, ".cache", fname)
-        try:
-            with open(fpath, "r", encoding="utf-8") as f:
-                payload = json.load(f)
-        except FileNotFoundError:
-            logger.error(f"🔴You do not have a cache: {fpath}")
-            sys.exit()
-        else:
-            program_config = su.program_config_from_cache(payload)
-            react_env_dict["REACT_APP_CANDY_MACHINE_CONFIG"] = program_config
-
-        # start date
-        if args.react_env_start_date:
-            react_env_dict["REACT_APP_CANDY_START_DATE"] = su.start_date_to_timestamp(
-                args.react_env_start_date
-            )
-        else:
-            now = datetime.now(timezone.utc)
-            logger.info(f"using timestamp: {now.isoformat()=}")
-            react_env_dict["REACT_APP_CANDY_START_DATE"] = int(now.timestamp())
-
-        # treasury
-        if args.override_treasury_address:
-            pubkey = su.solana_keygen_pubkey(args.override_treasury_address)
-            logger.info(f"overriding creator {creator_address} with {pubkey}")
-            react_env_dict["REACT_APP_TREASURY_ADDRESS"] = pubkey
-        else:
-            react_env_dict["REACT_APP_TREASURY_ADDRESS"] = creator_address
-
-        # stdout
-        for k, v in react_env_dict.items():
-            print(f"{k}={v}")
+        su.react_env_for_project(
+            config=config,
+            project_name=args.project,
+            react_env_candy_machine_id=args.react_env_candy_machine_id,
+            env=args.env,
+            react_env_start_date=args.react_env_start_date,
+            override_treasury_address=args.override_treasury_address,
+        )
 
 
 if __name__ == "__main__":
