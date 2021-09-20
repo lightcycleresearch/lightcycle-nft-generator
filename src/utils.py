@@ -514,4 +514,44 @@ def react_env_for_project(
 
 
 def generate_metadata_project_new(config, project_name, overwrite=False):
-    pass
+    traits = config[project_name]["traits"]
+
+    # wildcard
+    wildcard_categories = {}
+    for trait in traits["trait_values"]:
+        try:
+            wildcard_values = traits["trait_values"][trait]["any"]
+        except KeyError:
+            pass
+        else:
+            wildcard_categories[trait] = wildcard_values
+    logger.info(pformat(wildcard_categories))
+
+    # select wildcard for any
+    selected_wildcards = {}
+    for k, v in wildcard_categories.items():
+        logger.info(f"{k} {v}")
+        selections = random.choices(
+            population=list(v.keys()),
+            weights=list(v.values()),
+        )
+        selected_wildcards[k] = selections[0]
+    logger.info(pformat(selected_wildcards))
+
+    # select sublevels
+    selected_sublevels = {}
+    for trait in traits["trait_values"]:
+        if trait in wildcard_categories.keys():
+            logger.info(f"Skip wildcard {trait=}")
+
+        for k, v in selected_wildcards.items():
+            try:
+                x = traits["trait_values"][trait][v]
+            except KeyError:
+                continue
+            selections = random.choices(
+                population=list(x.keys()),
+                weights=list(x.values()),
+            )
+            selected_sublevels[trait] = selections[0]
+    logger.info(pformat(selected_sublevels))
