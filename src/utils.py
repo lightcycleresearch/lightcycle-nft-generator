@@ -555,3 +555,6 @@ def generate_metadata_project_new(config, project_name, overwrite=False):
             )
             selected_sublevels[trait] = selections[0]
     logger.info(pformat(selected_sublevels))
+
+    combo = {**selected_wildcards, **selected_sublevels}
+    logger.info(pformat(combo))
