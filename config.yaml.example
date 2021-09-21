@@ -1,5 +1,6 @@
 example:
   settings:
+    working_dir: projects
     address: REPLACEME
     num_tokens: 3
     name_prefix: lightcycle
@@ -8,17 +9,17 @@ example:
     symbol: LCR
     seller_fee_basis_points: 100
   traits:
-    # order matters for trait type: we will layer subsequent traits on top of previous
-    # in the example below, we put 'bottom' first, then paste 'top' above it
+    # algorithms are: basic, restricted
+    trait_algorithm: basic
+    # order matters for trait type, as we will layer subsequent traits on top
     trait_types:
-      - bottom
       - top
-    # order doesn't matter for trait values
+      - bottom
     # values are weights.  rarity = weight / sum(weights_in_level)
     trait_values:
-      bottom:
-        blue: 1
-        green: 2
       top:
         black: 1
         red: 2
+      bottom:
+        blue: 1
+        green: 2
