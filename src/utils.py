@@ -677,3 +677,7 @@ def generate_metadata_project_new(config, project_name, overwrite=False):
     for md in metadatas:
         logger.info(f"{md=}")
     tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
+
+
+def generate_images_project_new(config, project_name, overwrite=False):
+    pass
