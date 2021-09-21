@@ -509,6 +509,16 @@ def create_scaffolding_combo(project_fdpath, traits):
         ensure_fdpath(fdpath)
 
 
+def create_scaffolding_csv(project_fdpath, traits):
+    """
+    Args:
+        traits (dict): config[project_name]["traits"]
+    """
+
+    assert traits["trait_algorithm"] == "csv"
+    ensure_fdpath(os.path.join(project_fdpath, "csv"))
+
+
 def initialize_project_folder(config, project_name):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
@@ -523,6 +533,8 @@ def initialize_project_folder(config, project_name):
         create_scaffolding_restricted(project_fdpath=project_fdpath, traits=traits)
     elif trait_algorithm == "combo":
         create_scaffolding_combo(project_fdpath=project_fdpath, traits=traits)
+    elif trait_algorithm == "csv":
+        create_scaffolding_csv(project_fdpath=project_fdpath, traits=traits)
     else:
         raise ValueError(f"invalid {trait_algorithm=}")
     logger.info(f"DONE!  Please place your images in {project_fdpath}/traits")
