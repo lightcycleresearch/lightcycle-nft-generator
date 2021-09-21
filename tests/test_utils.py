@@ -117,3 +117,12 @@ def test_parse_start_date_to_timestamp():
     assert su.start_date_to_timestamp("01 Jan 2021 00:00:00 GMT") == 1609459200
     assert su.start_date_to_timestamp("15 Mar 2021 12:34:56 GMT") == 1615811696
     assert su.start_date_to_timestamp("31 Dec 2021 00:00:00 GMT") == 1640908800
+
+
+def test_find_sublevel():
+    sublevels = su.find_sublevels(
+        {"archer": {"bow": 1, "arrow": 1}, "warrior": {"sword": 1}}
+    )
+    assert sublevels["bow"] == "archer"
+    assert sublevels["arrow"] == "archer"
+    assert sublevels["sword"] == "warrior"
