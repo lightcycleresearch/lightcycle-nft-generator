@@ -152,7 +152,7 @@ class TokenTool:
 
         return metadata
 
-    def generate(self, start, end):
+    def generate_metadatas(self, start, end):
         """
         Args:
             start (int): integer
@@ -673,7 +673,7 @@ def react_env_for_project(
 def generate_metadata_project_new(config, project_name, overwrite=False):
     tt = TokenTool(config=config, project_name=project_name)
     num_tokens = config[project_name]["settings"]["num_tokens"]
-    metadatas = tt.generate(0, num_tokens)
+    metadatas = tt.generate_metadatas(0, num_tokens)
     for md in metadatas:
         logger.info(f"{md=}")
     tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
