@@ -152,7 +152,7 @@ class TokenTool:
 
         return metadata
 
-    def generate_metadatas(self, start, end):
+    def generate_metadatas_combo(self, start, end):
         """
         Args:
             start (int): integer
@@ -780,9 +780,21 @@ def react_env_for_project(
 def generate_metadata_project_new(config, project_name, overwrite=False):
     tt = TokenTool(config=config, project_name=project_name)
     num_tokens = config[project_name]["settings"]["num_tokens"]
-    metadatas = tt.generate_metadatas(0, num_tokens)
+    trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
+
+    # generate
+    if trait_algorithm == "combo":
+        metadatas = tt.generate_metadatas_combo(0, num_tokens)
+    elif trait_algorithm == "csv":
+        raise NotImplementedError
+    else:
+        raise ValueError(f"invalid {trait_algorithm}")
+
+    # logs
     for md in metadatas:
         logger.info(f"{md=}")
+
+    # save
     tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
 
 
