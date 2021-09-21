@@ -540,7 +540,7 @@ def initialize_project_folder(config, project_name):
     logger.info(f"DONE!  Please place your images in {project_fdpath}/traits")
 
 
-def generate_metadata_project(config, project_name, overwrite=False):
+def generate_metadata_project_basic(config, project_name, overwrite=False):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     settings = config[project_name]["settings"]
     num_tokens = int(settings["num_tokens"])
@@ -777,13 +777,17 @@ def react_env_for_project(
         print(f"{k}={v}")
 
 
-def generate_metadata_project_new(config, project_name, overwrite=False):
+def generate_metadata_project(config, project_name, overwrite=False):
     tt = TokenTool(config=config, project_name=project_name)
     num_tokens = config[project_name]["settings"]["num_tokens"]
     trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
 
     # generate
-    if trait_algorithm == "combo":
+    if trait_algorithm == "basic":
+        generate_metadata_project_basic(
+            config=config, project_name=project_name, overwrite=overwrite
+        )
+    elif trait_algorithm == "combo":
         metadatas = tt.generate_metadatas_combo(0, num_tokens)
     elif trait_algorithm == "csv":
         raise NotImplementedError
