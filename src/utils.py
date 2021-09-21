@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from pprint import pformat
 from shutil import copyfile
+import copy
 import json
 import os
 import random
@@ -105,6 +106,7 @@ class TokenTool:
         assert not metadata["collection"]
         assert not metadata["description"]
         assert not metadata["symbol"]
+        assert not metadata["seller_fee_basis_points"]
         metadata["collection"] = s["collection"]
         metadata["description"] = s["description"]
         metadata["symbol"] = s["symbol"]
@@ -124,12 +126,8 @@ class TokenTool:
         metadata["name"] = f"{name_prefix} #{token_num}"
 
         # new files list
-        metadata["properties"]["files"] = []
-        metadata["properties"]["files"].append(
-            {"type": "image/png", "uri": image_fname}
-        )
-        logger.info(pformat(metadata))
-        raise
+        metadata["properties"]["files"] = [{"type": "image/png", "uri": image_fname}]
+        logger.info(metadata)
 
         # new attributes list
         metadata["attributes"] = []
@@ -146,7 +144,7 @@ class TokenTool:
         """
         assert token_num >= 0
 
-        metadata = self.TEMPLATE.copy()
+        metadata = copy.deepcopy(self.TEMPLATE)
         self.set_project_values(metadata)
         self.set_token_values(
             metadata=metadata, token_num=token_num, attributes=attributes
@@ -175,14 +173,14 @@ class TokenTool:
         md = metadata
         token_name = md["name"]
         token_num = int(token_name.split("#")[-1])
-        image_fname = md["image"]
+        logger.info(f"{token_name} {token_num=}")
 
+        image_fname = md["image"]
         if token_num != int(image_fname.split(".")[0]):
             raise ValueError(f"image fname doesnt match {token_num} {image_fname=}")
 
         logger.info(pformat(md["properties"]["files"]))
         uri_fname = md["properties"]["files"][0]["uri"]
-        logger.info(f"{token_num=} {int(uri_fname.split('.')[0])}")
         if token_num != int(uri_fname.split(".")[0]):
             raise ValueError(f"{token_num=} does not match {uri_fname=}")
 
@@ -196,6 +194,7 @@ class TokenTool:
         )
         metadata_fdpath = os.path.join(project_fdpath, "metadata")
         for md in metadatas:
+            logger.info(f"checking {md=}")
             self._validate_metadata(metadata=md)
 
             token_name = md["name"]
@@ -673,5 +672,7 @@ def react_env_for_project(
 
 def generate_metadata_project_new(config, project_name, overwrite=False):
     tt = TokenTool(config=config, project_name=project_name)
-    metadatas = tt.generate(0, 2)
+    metadatas = tt.generate(0, 5)
+    for md in metadatas:
+        logger.info(f"{md=}")
     tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
