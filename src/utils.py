@@ -211,13 +211,18 @@ class TokenTool:
                 json.dump(md, f, indent=4)
             logger.info(f"Saving {token_name} -> {metadata_fname}")
 
-    def create_image_plan(self, attributes):
+    def create_image_plan(self, metadata):
         """
         Args:
             attributes (dict): key=value
             token_num (int): token number
             overwrite (bool)
         """
+        attributes = {}
+        for attr_pair in metadata["attributes"]:
+            attributes[attr_pair["trait_type"]] = attr_pair["trait_value"]
+        logger.info(f"attributes: {pformat(attributes)}")
+
         logger.info(attributes)
         traits = self.config[self.project_name]["traits"]
         image_plan = []
@@ -233,8 +238,16 @@ class TokenTool:
                 trait_type=trait_type, trait_value=trait_value
             )
             logger.info(f"{image_fpath=}")
-            image_plan.append(image_plan)
+            image_plan.append(image_fpath)
         return image_plan
+
+    def create_image_plans(self, metadatas):
+        image_plans = {}
+        for metadata in metadatas:
+            token_num = int(metadata["name"].split("#")[-1])
+            image_plan = self.create_image_plan(metadata=metadata)
+            image_plans[token_num] = image_plan
+        return image_plans
 
     def create_image_fpath(self, trait_type, trait_value, extension="png"):
         project_fdpath = get_project_fdpath(
@@ -257,6 +270,28 @@ class TokenTool:
         # create fname
         fname = f"{trait_type}-{sublevel}-{trait_value}.{extension}"
         return os.path.join(project_fdpath, "traits", trait_type, sublevel, fname)
+
+    def save_image_plans(self, image_plans, overwrite=False):
+        project_fdpath = get_project_fdpath(
+            config=self.config, project_name=self.project_name
+        )
+        image_fdpath = os.path.join(project_fdpath, "images")
+        for token_num, image_plan in image_plans.items():
+            image_fpath = os.path.join(image_fdpath, f"{token_num}.png")
+            if os.path.exists(image_fpath) and not overwrite:
+                logger.info(f"Skipping existing {token_num}.png")
+                continue
+
+            logger.info(f"Processing {token_num} -> ...")
+
+            img = None
+            for input_fpath in image_plan:
+                if img is None:
+                    img = Image.open(input_fpath)
+                    continue
+                layer = Image.open(input_fpath)
+                img.paste(layer, (0, 0), layer)
+            img.save(image_fpath, "PNG")
 
 
 def find_sublevels(trait_type_levels):
@@ -745,21 +780,13 @@ def generate_images_project_new(config, project_name, overwrite=False):
     input_fnames.sort(key=lambda f: int(re.sub("\D", "", f)))
     logger.info(f"found {len(input_fnames)} files")
 
-    image_plans = {}
+    metadatas = []
     for input_fname in input_fnames:
         logger.info(f"{input_fname} ->")
         input_fpath = os.path.join(input_fdpath, input_fname)
         with open(input_fpath, "r", encoding="utf-8") as f:
             input_payload = json.load(f)
+        metadatas.append(input_payload)
 
-        token_num = int(input_fname.split(".")[0])
-        attributes = {}
-        for attr_pair in input_payload["attributes"]:
-            attributes[attr_pair["trait_type"]] = attr_pair["trait_value"]
-        logger.info(f"attributes: {pformat(attributes)}")
-
-        image_plan = tt.create_image_plan(attributes=attributes, token_num=token_num)
-        image_plans[token_num] = image_plan
-
-    for token_num, ip in image_plans.items():
-        logger.info(f"{token_num=}")
+    image_plans = tt.create_image_plans(metadatas=metadatas)
+    tt.save_image_plans(image_plans=image_plans, overwrite=overwrite)
