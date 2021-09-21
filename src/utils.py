@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from pprint import pformat
 from shutil import copyfile
+import copy
 import json
 import os
 import random
@@ -21,6 +22,194 @@ BASE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
 
 class ValidationException(Exception):
     pass
+
+
+class TokenTool:
+    TEMPLATE = {
+        "attributes": [
+            # {"trait_type": "color", "value": "white"},
+        ],
+        "collection": None,
+        "description": None,
+        "image": None,
+        "name": None,
+        "properties": {
+            "category": "image",
+            "creators": [
+                {
+                    "address": None,
+                    "share": 100,
+                }
+            ],
+            "files": None,
+        },
+        "seller_fee_basis_points": None,
+        "symbol": None,
+    }
+
+    def __init__(self, config, project_name):
+        self.config = config
+        self.project_name = project_name
+
+    def random_attributes(self):
+        traits = self.config[self.project_name]["traits"]
+
+        # wildcard
+        wildcard_categories = {}
+        for trait in traits["trait_values"]:
+            try:
+                wildcard_values = traits["trait_values"][trait]["any"]
+            except KeyError:
+                pass
+            else:
+                wildcard_categories[trait] = wildcard_values
+        logger.info(pformat(wildcard_categories))
+
+        # select wildcard for any
+        selected_wildcards = {}
+        for k, v in wildcard_categories.items():
+            logger.info(f"{k} {v}")
+            selections = random.choices(
+                population=list(v.keys()),
+                weights=list(v.values()),
+            )
+            selected_wildcards[k] = selections[0]
+        logger.info(pformat(selected_wildcards))
+
+        # select sublevels
+        selected_sublevels = {}
+        for trait in traits["trait_values"]:
+            if trait in wildcard_categories.keys():
+                logger.info(f"Skip wildcard {trait=}")
+
+            for k, v in selected_wildcards.items():
+                try:
+                    x = traits["trait_values"][trait][v]
+                except KeyError:
+                    continue
+                selections = random.choices(
+                    population=list(x.keys()),
+                    weights=list(x.values()),
+                )
+                selected_sublevels[trait] = selections[0]
+        logger.info(pformat(selected_sublevels))
+
+        # combine
+        combo = {**selected_wildcards, **selected_sublevels}
+        logger.info(pformat(combo))
+        return combo
+
+    def set_project_values(self, metadata):
+        s = self.config[self.project_name]["settings"]
+
+        # collection
+        assert not metadata["collection"]
+        assert not metadata["description"]
+        assert not metadata["symbol"]
+        assert not metadata["seller_fee_basis_points"]
+        metadata["collection"] = s["collection"]
+        metadata["description"] = s["description"]
+        metadata["symbol"] = s["symbol"]
+        metadata["seller_fee_basis_points"] = s["seller_fee_basis_points"]
+
+        # addresses
+        assert len(metadata["properties"]["creators"]) == 1
+        metadata["properties"]["creators"][0]["address"] = s["address"]
+
+    def set_token_values(self, metadata, token_num, attributes):
+        """overwrite token specific placeholders"""
+        s = self.config[self.project_name]["settings"]
+        name_prefix = s["name_prefix"]
+
+        image_fname = f"{token_num}.png"
+        metadata["image"] = image_fname
+        metadata["name"] = f"{name_prefix} #{token_num}"
+
+        # new files list
+        metadata["properties"]["files"] = [{"type": "image/png", "uri": image_fname}]
+        logger.info(metadata)
+
+        # new attributes list
+        metadata["attributes"] = []
+        for trait_type, trait_value in attributes.items():
+            metadata["attributes"].append(
+                {"trait_type": trait_type, "trait_value": trait_value}
+            )
+
+    def token_metadata_from_attributes(self, token_num, attributes):
+        """
+        Args:
+            token_num (int): token number
+            attributes (dict): key=trait_type, value=trait_value
+        """
+        assert token_num >= 0
+
+        metadata = copy.deepcopy(self.TEMPLATE)
+        self.set_project_values(metadata)
+        self.set_token_values(
+            metadata=metadata, token_num=token_num, attributes=attributes
+        )
+
+        return metadata
+
+    def generate_metadatas(self, start, end):
+        """
+        Args:
+            start (int): integer
+            end (int): integer
+        """
+        metadatas = []
+        for token_num in range(start, end):
+            logger.info(f"Genearting {token_num}")
+            attributes = self.random_attributes()
+            md = self.token_metadata_from_attributes(
+                token_num=token_num, attributes=attributes
+            )
+            logger.info(pformat(md))
+            metadatas.append(md)
+        return metadatas
+
+    def _validate_metadata(self, metadata):
+        md = metadata
+        token_name = md["name"]
+        token_num = int(token_name.split("#")[-1])
+        logger.info(f"{token_name} {token_num=}")
+
+        image_fname = md["image"]
+        if token_num != int(image_fname.split(".")[0]):
+            raise ValueError(f"image fname doesnt match {token_num} {image_fname=}")
+
+        logger.info(pformat(md["properties"]["files"]))
+        uri_fname = md["properties"]["files"][0]["uri"]
+        if token_num != int(uri_fname.split(".")[0]):
+            raise ValueError(f"{token_num=} does not match {uri_fname=}")
+
+    def save_metadatas(self, metadatas, overwrite=False):
+        """
+        Args:
+            metadatas (list of metadata): metadata metaplex formt
+        """
+        project_fdpath = get_project_fdpath(
+            config=self.config, project_name=self.project_name
+        )
+        metadata_fdpath = os.path.join(project_fdpath, "metadata")
+        for md in metadatas:
+            logger.info(f"checking {md=}")
+            self._validate_metadata(metadata=md)
+
+            token_name = md["name"]
+            token_num = int(token_name.split("#")[-1])
+
+            # generate
+            metadata_fname = f"{token_num}.json"
+            fpath = os.path.join(metadata_fdpath, metadata_fname)
+            if os.path.exists(fpath) and not overwrite:
+                logger.warning(f"Skip existing {metadata_fname}")
+                continue
+
+            with open(fpath, "w", encoding="utf-8") as f:
+                json.dump(md, f, indent=4)
+            logger.info(f"Saving {token_name} -> {metadata_fname}")
 
 
 def validate_config(config, project_name):
@@ -191,14 +380,45 @@ def create_scaffolding_restricted(project_fdpath, traits):
                 pass
 
 
+def ensure_fdpath(fdpath):
+    try:
+        os.makedirs(fdpath)
+    except FileExistsError:
+        pass
+
+
+def create_scaffolding_combo(project_fdpath, traits):
+    """
+    Args:
+        traits (dict): config[project_name]["traits"]
+    """
+
+    assert traits["trait_algorithm"] == "combo"
+
+    fdpaths = []
+    for trait_type in traits["trait_types"]:
+
+        # hidden
+        if trait_type in traits["trait_hidden"]:
+            logger.info(f"skip hidden {trait_type=}")
+            continue
+
+        # sublevels
+        trait_type_fdpath = os.path.join(project_fdpath, "traits", trait_type)
+        sublevels = traits["trait_values"][trait_type].keys()
+        for sublevel in sublevels:
+            fdpaths.append(os.path.join(trait_type_fdpath, sublevel))
+
+    # create fdpaths
+    for fdpath in fdpaths:
+        ensure_fdpath(fdpath)
+
+
 def initialize_project_folder(config, project_name):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
     for subfolder in ["metadata", "images", "assets"]:
-        try:
-            os.makedirs(os.path.join(project_fdpath, subfolder))
-        except FileExistsError:
-            pass
+        ensure_fdpath(os.path.join(project_fdpath, subfolder))
 
     trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
     traits = config[project_name]["traits"]
@@ -206,6 +426,8 @@ def initialize_project_folder(config, project_name):
         create_scaffolding_basic(project_fdpath=project_fdpath, traits=traits)
     elif trait_algorithm == "restricted":
         create_scaffolding_restricted(project_fdpath=project_fdpath, traits=traits)
+    elif trait_algorithm == "combo":
+        create_scaffolding_combo(project_fdpath=project_fdpath, traits=traits)
     else:
         raise ValueError(f"invalid {trait_algorithm=}")
     logger.info(f"DONE!  Please place your images in {project_fdpath}/traits")
@@ -446,3 +668,16 @@ def react_env_for_project(
     # stdout
     for k, v in react_env_dict.items():
         print(f"{k}={v}")
+
+
+def generate_metadata_project_new(config, project_name, overwrite=False):
+    tt = TokenTool(config=config, project_name=project_name)
+    num_tokens = config[project_name]["settings"]["num_tokens"]
+    metadatas = tt.generate_metadatas(0, num_tokens)
+    for md in metadatas:
+        logger.info(f"{md=}")
+    tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
+
+
+def generate_images_project_new(config, project_name, overwrite=False):
+    pass
