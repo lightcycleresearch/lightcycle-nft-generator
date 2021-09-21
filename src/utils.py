@@ -245,9 +245,12 @@ class TokenTool:
             return None
 
         # find sublevel
-        # sublevel = "any"
-        sublevels = find_sublevels(traits=traits["trait_values"], trait_type=trait_type)
-        sublevel = sublevels[trait_type]
+        try:
+            sublevels = find_sublevels(traits["trait_values"][trait_type])
+        except KeyError:
+            sublevel = "any"
+        else:
+            sublevel = sublevels[trait_value]
 
         # create fname
         fname = f"{trait_type}-{sublevel}-{trait_value}.{extension}"
