@@ -232,7 +232,12 @@ class TokenTool:
                 continue
 
             # get image fpath
-            trait_value = attributes[trait_type]
+            try:
+                trait_value = attributes[trait_type]
+            except KeyError:
+                # not all traits are in all images
+                logger.info(f"skip unavailable {trait_type=}")
+                continue
             logger.info(f"Looking for image fpath for {trait_type} {trait_value=}")
             image_fpath = self.create_image_fpath(
                 trait_type=trait_type, trait_value=trait_value
