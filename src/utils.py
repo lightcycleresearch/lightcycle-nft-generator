@@ -160,14 +160,29 @@ class TokenTool:
         """
         metadatas = []
         for token_num in range(start, end):
-            attributes = self.random_attributes()
             logger.info(f"Genearting {token_num}")
+            attributes = self.random_attributes()
             md = self.token_metadata_from_attributes(
                 token_num=token_num, attributes=attributes
             )
             logger.info(pformat(md))
             metadatas.append(md)
         return metadatas
+
+    def _validate_metadata(self, metadata):
+        md = metadata
+        token_name = md["name"]
+        token_num = int(token_name.split("#")[-1])
+        image_fname = md["image"]
+
+        if token_num != int(image_fname.split(".")[0]):
+            raise ValueError(f"image fname doesnt match {token_num} {image_fname=}")
+
+        logger.info(pformat(md["properties"]["files"]))
+        uri_fname = md["properties"]["files"][0]["uri"]
+        logger.info(f"{token_num=} {int(uri_fname.split('.')[0])}")
+        if token_num != int(uri_fname.split(".")[0]):
+            raise ValueError(f"{token_num=} does not match {uri_fname=}")
 
     def save_metadatas(self, metadatas, overwrite=False):
         """
@@ -179,14 +194,10 @@ class TokenTool:
         )
         metadata_fdpath = os.path.join(project_fdpath, "metadata")
         for md in metadatas:
+            self._validate_metadata(metadata=md)
+
             token_name = md["name"]
             token_num = int(token_name.split("#")[-1])
-
-            # validation
-            image_fname = md["image"]
-            assert token_num == int(image_fname.split(".")[0])
-            uri_fname = md["properties"]["files"][0]["uri"]
-            assert token_num == int(uri_fname.split(".")[0])
 
             # generate
             metadata_fname = f"{token_num}.json"
