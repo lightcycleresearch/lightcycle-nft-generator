@@ -211,6 +211,56 @@ class TokenTool:
                 json.dump(md, f, indent=4)
             logger.info(f"Saving {token_name} -> {metadata_fname}")
 
+    def create_image(self, attributes, token_num, overwrite=False):
+        """
+        Args:
+            attributes (dict): key=value
+            token_num (int): token number
+            overwrite (bool)
+        """
+        assert token_num >= 0
+        logger.info(attributes)
+        traits = self.config[self.project_name]["traits"]
+        for trait_type in traits["trait_types"]:
+            if trait_type in traits["trait_hidden"]:
+                logger.info(f"skip hidden {trait_type=}")
+                continue
+
+            # get image fpath
+            trait_value = attributes[trait_type]
+            logger.info(f"Looking for image fpath for {trait_type} {trait_value=}")
+            image_fpath = self.create_image_fpath(
+                trait_type=trait_type, trait_value=trait_value
+            )
+            logger.info(f"{image_fpath=}")
+
+    def create_image_fpath(self, trait_type, trait_value, extension="png"):
+        project_fdpath = get_project_fdpath(
+            config=self.config, project_name=self.project_name
+        )
+        traits_fdpath = os.path.join(project_fdpath, "traits")
+
+        traits = self.config[self.project_name]["traits"]
+        if trait_type in traits["trait_hidden"]:
+            return None
+
+        # find sublevel
+        # sublevel = "any"
+        sublevels = find_sublevels(traits=traits["trait_values"], trait_type=trait_type)
+        sublevel = sublevels[trait_type]
+
+        # create fname
+        fname = f"{trait_type}-{sublevel}-{trait_value}.{extension}"
+        return os.path.join(project_fdpath, "traits", trait_type, sublevel, fname)
+
+
+def find_sublevels(trait_type_levels):
+    sublevels = {}
+    for sublevel, blob in trait_type_levels.items():
+        for k in blob.keys():
+            sublevels[k] = sublevel
+    return sublevels
+
 
 def validate_config(config, project_name):
     try:
@@ -680,4 +730,27 @@ def generate_metadata_project_new(config, project_name, overwrite=False):
 
 
 def generate_images_project_new(config, project_name, overwrite=False):
-    pass
+    tt = TokenTool(config=config, project_name=project_name)
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
+    input_fdpath = os.path.join(project_fdpath, "metadata")
+
+    # sort metadata input_fnames as numeric and not str, so 0,1,2,3 instead of 0,10,11,12
+    input_fnames = os.listdir(input_fdpath)
+    input_fnames = [x for x in input_fnames if ".json" in x]
+    input_fnames.sort(key=lambda f: int(re.sub("\D", "", f)))
+    logger.info(f"found {len(input_fnames)} files")
+
+    for input_fname in input_fnames:
+        logger.info(f"{input_fname} ->")
+        input_fpath = os.path.join(input_fdpath, input_fname)
+        with open(input_fpath, "r", encoding="utf-8") as f:
+            input_payload = json.load(f)
+
+        token_num = int(input_fname.split(".")[0])
+        attributes = {}
+        for attr_pair in input_payload["attributes"]:
+            attributes[attr_pair["trait_type"]] = attr_pair["trait_value"]
+        logger.info(f"attributes: {pformat(attributes)}")
+
+        tt.create_image(attributes=attributes, token_num=token_num, overwrite=overwrite)
+        break
