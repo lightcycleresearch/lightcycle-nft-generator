@@ -211,16 +211,16 @@ class TokenTool:
                 json.dump(md, f, indent=4)
             logger.info(f"Saving {token_name} -> {metadata_fname}")
 
-    def create_image(self, attributes, token_num, overwrite=False):
+    def create_image_plan(self, attributes):
         """
         Args:
             attributes (dict): key=value
             token_num (int): token number
             overwrite (bool)
         """
-        assert token_num >= 0
         logger.info(attributes)
         traits = self.config[self.project_name]["traits"]
+        image_plan = []
         for trait_type in traits["trait_types"]:
             if trait_type in traits["trait_hidden"]:
                 logger.info(f"skip hidden {trait_type=}")
@@ -233,6 +233,8 @@ class TokenTool:
                 trait_type=trait_type, trait_value=trait_value
             )
             logger.info(f"{image_fpath=}")
+            image_plan.append(image_plan)
+        return image_plan
 
     def create_image_fpath(self, trait_type, trait_value, extension="png"):
         project_fdpath = get_project_fdpath(
@@ -743,6 +745,7 @@ def generate_images_project_new(config, project_name, overwrite=False):
     input_fnames.sort(key=lambda f: int(re.sub("\D", "", f)))
     logger.info(f"found {len(input_fnames)} files")
 
+    image_plans = {}
     for input_fname in input_fnames:
         logger.info(f"{input_fname} ->")
         input_fpath = os.path.join(input_fdpath, input_fname)
@@ -755,5 +758,8 @@ def generate_images_project_new(config, project_name, overwrite=False):
             attributes[attr_pair["trait_type"]] = attr_pair["trait_value"]
         logger.info(f"attributes: {pformat(attributes)}")
 
-        tt.create_image(attributes=attributes, token_num=token_num, overwrite=overwrite)
-        break
+        image_plan = tt.create_image_plan(attributes=attributes, token_num=token_num)
+        image_plans[token_num] = image_plan
+
+    for token_num, ip in image_plans.items():
+        logger.info(f"{token_num=}")
