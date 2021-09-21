@@ -128,6 +128,8 @@ class TokenTool:
         metadata["properties"]["files"].append(
             {"type": "image/png", "uri": image_fname}
         )
+        logger.info(pformat(metadata))
+        raise
 
         # new attributes list
         metadata["attributes"] = []
