@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from pprint import pformat
 from shutil import copyfile
 import copy
+import csv
 import json
 import os
 import random
@@ -167,6 +168,40 @@ class TokenTool:
             )
             logger.info(pformat(md))
             metadatas.append(md)
+        return metadatas
+
+    def generate_metadatas_csv(self, start, end):
+        """Looks for a file named metadata.csv in csv folder
+
+        Args:
+            start (int): integer
+            end (int): integer
+        """
+        project_fdpath = get_project_fdpath(
+            config=self.config, project_name=self.project_name
+        )
+        csv_fpath = os.path.join(project_fdpath, "csv", "metadata.csv")
+        metadatas = []
+
+        with open(csv_fpath, "r", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            for i, row in enumerate(reader):
+                if i == 0:
+                    header = row
+                    continue
+
+                attributes = {}
+                for ttype, tval in zip(header, row):
+                    attributes[ttype] = tval
+                logger.info(f"{attributes=}")
+
+                token_num = i - 1
+                metadatas.append(
+                    self.token_metadata_from_attributes(
+                        token_num=token_num, attributes=attributes
+                    )
+                )
+
         return metadatas
 
     def _validate_metadata(self, metadata):
@@ -790,7 +825,7 @@ def generate_metadata_project(config, project_name, overwrite=False):
     elif trait_algorithm == "combo":
         metadatas = tt.generate_metadatas_combo(0, num_tokens)
     elif trait_algorithm == "csv":
-        raise NotImplementedError
+        metadatas = tt.generate_metadatas_csv(0, num_tokens)
     else:
         raise ValueError(f"invalid {trait_algorithm}")
 
