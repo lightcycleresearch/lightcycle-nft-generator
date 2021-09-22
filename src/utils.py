@@ -716,6 +716,13 @@ def generate_images_project(config, project_name, overwrite=False):
 def combine_assets_project(config, project_name, overwrite=False):
     # paths
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
+    s = config[project_name]["settings"]
+    num_tokens = s["num_tokens"]
+    try:
+        image_format = s["image_format"]
+    except KeyError:
+        image_format = "png"
+
     metadata_fdpath = os.path.join(project_fdpath, "metadata")
     images_fdpath = os.path.join(project_fdpath, "images")
     assets_fdpath = os.path.join(project_fdpath, "assets")
@@ -728,7 +735,7 @@ def combine_assets_project(config, project_name, overwrite=False):
     for token_num in range(0, num_tokens):
 
         # source
-        image_fname = f"{token_num}.png"
+        image_fname = f"{token_num}.{image_format}"
         metadata_fname = f"{token_num}.json"
 
         image_source = os.path.join(images_fdpath, image_fname)
@@ -737,7 +744,7 @@ def combine_assets_project(config, project_name, overwrite=False):
         image_dest = os.path.join(assets_fdpath, image_fname)
         metadata_dest = os.path.join(assets_fdpath, metadata_fname)
 
-        if not args.overwrite and (
+        if not overwrite and (
             os.path.exists(image_dest) or os.path.exists(metadata_dest)
         ):
             logger.warning(
