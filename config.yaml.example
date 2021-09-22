@@ -8,6 +8,7 @@ example:
     collection: lightcycle collection
     symbol: LCR
     seller_fee_basis_points: 100
+    image_format: png
   traits:
     # algorithms are: basic, restricted
     trait_algorithm: basic
