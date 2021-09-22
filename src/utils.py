@@ -644,7 +644,7 @@ def generate_metadata_project_basic(config, project_name, overwrite=False):
             json.dump(metadata, f, indent=4)
 
 
-def generate_images_project(config, project_name, overwrite=False):
+def generate_images_project_basic(config, project_name, overwrite=False):
 
     # paths
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
@@ -850,7 +850,21 @@ def generate_metadata_project(config, project_name, overwrite=False):
     tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
 
 
-def generate_images_project_new(config, project_name, overwrite=False):
+def generate_images_project(config, project_name, overwrite=False):
+    trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
+    if trait_algorithm == "basic":
+        generate_images_project_basic(
+            config=config, project_name=project_name, overwrite=overwrite
+        )
+    elif trait_algorithm == "combo":
+        generate_images_project_combo(
+            config=config, project_name=project_name, overwrite=overwrite
+        )
+    else:
+        raise ValueError(f"invalid {trait_algorithm=}")
+
+
+def generate_images_project_combo(config, project_name, overwrite=False):
     tt = TokenTool(config=config, project_name=project_name)
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     input_fdpath = os.path.join(project_fdpath, "metadata")

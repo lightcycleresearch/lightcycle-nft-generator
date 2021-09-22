@@ -45,11 +45,6 @@ def make_args():
         help="generate imates from traits",
     )
     parser.add_argument(
-        "--generate-images-new",
-        action="store_true",
-        help="generate imates from traits",
-    )
-    parser.add_argument(
         "--combine-assets", action="store_true", help="images and metadata into assets"
     )
     parser.add_argument(
@@ -113,11 +108,6 @@ def main():
 
     if args.generate_images:
         su.generate_images_project(
-            config=config, project_name=args.project, overwrite=args.overwrite
-        )
-
-    if args.generate_images_new:
-        su.generate_images_project_new(
             config=config, project_name=args.project, overwrite=args.overwrite
         )
 
