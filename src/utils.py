@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from pprint import pformat
 from shutil import copyfile
 import copy
+import csv
 import json
 import os
 import random
@@ -119,14 +120,20 @@ class TokenTool:
     def set_token_values(self, metadata, token_num, attributes):
         """overwrite token specific placeholders"""
         s = self.config[self.project_name]["settings"]
-        name_prefix = s["name_prefix"]
+        try:
+            image_format = s["image_format"]
+        except KeyError:
+            image_format = "png"
 
-        image_fname = f"{token_num}.png"
+        name_prefix = s["name_prefix"]
+        image_fname = f"{token_num}.{image_format}"
         metadata["image"] = image_fname
         metadata["name"] = f"{name_prefix} #{token_num}"
 
         # new files list
-        metadata["properties"]["files"] = [{"type": "image/png", "uri": image_fname}]
+        metadata["properties"]["files"] = [
+            {"type": f"image/{image_format}", "uri": image_fname}
+        ]
         logger.info(metadata)
 
         # new attributes list
@@ -152,7 +159,7 @@ class TokenTool:
 
         return metadata
 
-    def generate_metadatas(self, start, end):
+    def generate_metadatas_combo(self, start, end):
         """
         Args:
             start (int): integer
@@ -167,6 +174,40 @@ class TokenTool:
             )
             logger.info(pformat(md))
             metadatas.append(md)
+        return metadatas
+
+    def generate_metadatas_csv(self, start, end):
+        """Looks for a file named metadata.csv in csv folder
+
+        Args:
+            start (int): integer
+            end (int): integer
+        """
+        project_fdpath = get_project_fdpath(
+            config=self.config, project_name=self.project_name
+        )
+        csv_fpath = os.path.join(project_fdpath, "csv", "metadata.csv")
+        metadatas = []
+
+        with open(csv_fpath, "r", encoding="utf-8") as f:
+            reader = csv.reader(f)
+            for i, row in enumerate(reader):
+                if i == 0:
+                    header = row
+                    continue
+
+                attributes = {}
+                for ttype, tval in zip(header, row):
+                    attributes[ttype] = tval
+                logger.info(f"{attributes=}")
+
+                token_num = i - 1
+                metadatas.append(
+                    self.token_metadata_from_attributes(
+                        token_num=token_num, attributes=attributes
+                    )
+                )
+
         return metadatas
 
     def _validate_metadata(self, metadata):
@@ -509,6 +550,16 @@ def create_scaffolding_combo(project_fdpath, traits):
         ensure_fdpath(fdpath)
 
 
+def create_scaffolding_csv(project_fdpath, traits):
+    """
+    Args:
+        traits (dict): config[project_name]["traits"]
+    """
+
+    assert traits["trait_algorithm"] == "csv"
+    ensure_fdpath(os.path.join(project_fdpath, "csv"))
+
+
 def initialize_project_folder(config, project_name):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
@@ -523,12 +574,14 @@ def initialize_project_folder(config, project_name):
         create_scaffolding_restricted(project_fdpath=project_fdpath, traits=traits)
     elif trait_algorithm == "combo":
         create_scaffolding_combo(project_fdpath=project_fdpath, traits=traits)
+    elif trait_algorithm == "csv":
+        create_scaffolding_csv(project_fdpath=project_fdpath, traits=traits)
     else:
         raise ValueError(f"invalid {trait_algorithm=}")
     logger.info(f"DONE!  Please place your images in {project_fdpath}/traits")
 
 
-def generate_metadata_project(config, project_name, overwrite=False):
+def generate_metadata_project_basic(config, project_name, overwrite=False):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     settings = config[project_name]["settings"]
     num_tokens = int(settings["num_tokens"])
@@ -663,6 +716,13 @@ def generate_images_project(config, project_name, overwrite=False):
 def combine_assets_project(config, project_name, overwrite=False):
     # paths
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
+    s = config[project_name]["settings"]
+    num_tokens = s["num_tokens"]
+    try:
+        image_format = s["image_format"]
+    except KeyError:
+        image_format = "png"
+
     metadata_fdpath = os.path.join(project_fdpath, "metadata")
     images_fdpath = os.path.join(project_fdpath, "images")
     assets_fdpath = os.path.join(project_fdpath, "assets")
@@ -675,7 +735,7 @@ def combine_assets_project(config, project_name, overwrite=False):
     for token_num in range(0, num_tokens):
 
         # source
-        image_fname = f"{token_num}.png"
+        image_fname = f"{token_num}.{image_format}"
         metadata_fname = f"{token_num}.json"
 
         image_source = os.path.join(images_fdpath, image_fname)
@@ -684,7 +744,7 @@ def combine_assets_project(config, project_name, overwrite=False):
         image_dest = os.path.join(assets_fdpath, image_fname)
         metadata_dest = os.path.join(assets_fdpath, metadata_fname)
 
-        if not args.overwrite and (
+        if not overwrite and (
             os.path.exists(image_dest) or os.path.exists(metadata_dest)
         ):
             logger.warning(
@@ -765,12 +825,28 @@ def react_env_for_project(
         print(f"{k}={v}")
 
 
-def generate_metadata_project_new(config, project_name, overwrite=False):
+def generate_metadata_project(config, project_name, overwrite=False):
     tt = TokenTool(config=config, project_name=project_name)
     num_tokens = config[project_name]["settings"]["num_tokens"]
-    metadatas = tt.generate_metadatas(0, num_tokens)
+    trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
+
+    # generate
+    if trait_algorithm == "basic":
+        generate_metadata_project_basic(
+            config=config, project_name=project_name, overwrite=overwrite
+        )
+    elif trait_algorithm == "combo":
+        metadatas = tt.generate_metadatas_combo(0, num_tokens)
+    elif trait_algorithm == "csv":
+        metadatas = tt.generate_metadatas_csv(0, num_tokens)
+    else:
+        raise ValueError(f"invalid {trait_algorithm}")
+
+    # logs
     for md in metadatas:
         logger.info(f"{md=}")
+
+    # save
     tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
 
 

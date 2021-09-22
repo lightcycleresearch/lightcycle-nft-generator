@@ -40,11 +40,6 @@ def make_args():
         help="generate metadata from example template",
     )
     parser.add_argument(
-        "--generate-metadata-new",
-        action="store_true",
-        help="generate metadata from example template",
-    )
-    parser.add_argument(
         "--generate-images",
         action="store_true",
         help="generate imates from traits",
@@ -110,11 +105,6 @@ def main():
     # --------
     if args.generate_metadata:
         su.generate_metadata_project(
-            config=config, project_name=args.project, overwrite=args.overwrite
-        )
-
-    if args.generate_metadata_new:
-        su.generate_metadata_project_new(
             config=config, project_name=args.project, overwrite=args.overwrite
         )
 
