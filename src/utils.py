@@ -120,14 +120,20 @@ class TokenTool:
     def set_token_values(self, metadata, token_num, attributes):
         """overwrite token specific placeholders"""
         s = self.config[self.project_name]["settings"]
-        name_prefix = s["name_prefix"]
+        try:
+            image_format = s["image_format"]
+        except KeyError:
+            image_format = "png"
 
-        image_fname = f"{token_num}.png"
+        name_prefix = s["name_prefix"]
+        image_fname = f"{token_num}.{image_format}"
         metadata["image"] = image_fname
         metadata["name"] = f"{name_prefix} #{token_num}"
 
         # new files list
-        metadata["properties"]["files"] = [{"type": "image/png", "uri": image_fname}]
+        metadata["properties"]["files"] = [
+            {"type": f"image/{image_format}", "uri": image_fname}
+        ]
         logger.info(metadata)
 
         # new attributes list
