@@ -24,3 +24,18 @@ example:
       bottom:
         blue: 1
         green: 2
+
+examplecsv:
+  settings:
+    working_dir: projects
+    address: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    num_tokens: 5
+    name_prefix: lightcycle
+    description: lightcycle description
+    collection: lightcycle collection
+    symbol: LCR
+    seller_fee_basis_points: 100
+    image_format: jpg
+  traits:
+    # name your file metadata.csv and add to the projects/examplecsv/csv/ folder
+    trait_algorithm: csv
