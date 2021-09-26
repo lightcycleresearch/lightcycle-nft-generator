@@ -771,14 +771,14 @@ def combine_assets_project(config, project_name, overwrite=False):
         image_fname = f"{token_num}.{image_format}"
         metadata_fname = f"{token_num}.json"
 
-        image_source = os.path.join(images_fdpath, image_fname)
-        metadata_source = os.path.join(metadata_fdpath, metadata_fname)
+        fpath_image_source = os.path.join(images_fdpath, image_fname)
+        fpath_metadata_source = os.path.join(metadata_fdpath, metadata_fname)
 
-        image_dest = os.path.join(assets_fdpath, image_fname)
-        metadata_dest = os.path.join(assets_fdpath, metadata_fname)
+        fpath_image_dest = os.path.join(assets_fdpath, image_fname)
+        fpath_metadata_dest = os.path.join(assets_fdpath, metadata_fname)
 
         if not overwrite and (
-            os.path.exists(image_dest) or os.path.exists(metadata_dest)
+            os.path.exists(fpath_image_dest) or os.path.exists(fpath_metadata_dest)
         ):
             logger.warning(
                 f"{image_fname} or {metadata_fname} already exist. You must pass --overwrite to overwrite"
@@ -786,9 +786,9 @@ def combine_assets_project(config, project_name, overwrite=False):
             continue
 
         logger.info(f"Combining assets for {token_num}")
-        # copy to assets
-        copyfile(image_source, image_dest)
-        copyfile(metadata_source, metadata_dest)
+        # images are copied, metadata is translated
+        copyfile(fpath_image_source, fpath_image_dest)
+        copyfile(fpath_metadata_source, fpath_metadata_dest)
 
 
 def react_env_for_project(
