@@ -892,12 +892,8 @@ def generate_metadata_project(config, project_name, overwrite=False):
     else:
         raise ValueError(f"invalid {trait_algorithm}")
 
-    # logs
-    for md in metadatas:
-        logger.info(f"{md=}")
-
-    # save
-    tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
+    if trait_algorithm in ["combo", "csv"]:
+        tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
 
 
 def generate_images_project(config, project_name, overwrite=False):
