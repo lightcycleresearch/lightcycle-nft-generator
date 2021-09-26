@@ -980,7 +980,7 @@ def validate_project(config, project_name):
         logger.info(f"checking missing values for {trait_algorithm=}")
         for level1_name, level2_blob in trait_values.items():
             for level2_name, level3_blob in trait_values[level1_name].items():
-                logger.info(f"level3_blob {pformat(level3_blob)}")
+                logger.debug(f"level3_blob {pformat(level3_blob)}")
                 level_expected_values = list(level3_blob.keys())
                 expected_values.extend(level_expected_values)
         raw_expected_values = list(set(expected_values))
@@ -989,7 +989,6 @@ def validate_project(config, project_name):
         else:
             expected_values = [translation[k] for k in raw_expected_values]
 
-        logger.info(pformat(expected_values))
         logger.info(f"num expected values: {len(expected_values)}")
 
         for ev in expected_values:
