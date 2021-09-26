@@ -971,6 +971,9 @@ def validate_project(config, project_name):
                 failures["low_rarity"].append(value_name)
                 success = False
 
+    # check missing value
+    translation = load_translation(config=config, project_name=project_name)
+
     # results
     if not success:
         logger.error(pformat(failures))
