@@ -801,7 +801,7 @@ def combine_assets_project(config, project_name, overwrite=False):
                 metadata=orig_metadata, translation=translation, handle_missing="fail"
             )
             with open(fpath_metadata_dest, "w", encoding="utf-8") as f:
-                json.dump(f)
+                json.dump(metadata, f, indent=4)
 
 
 def react_env_for_project(
