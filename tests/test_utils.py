@@ -139,7 +139,7 @@ def test_apply_translation():
 
     translation = {
         "unchanged0": "english0",
-        "unchanged1": "english1",
+        "unchanged1": "  english1  ",
         "unchanged2": "english2",
     }
     metadata = su.apply_translation(metadata=orig_metadata, translation=translation)

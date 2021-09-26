@@ -952,7 +952,7 @@ def apply_translation(metadata, translation=None, handle_missing="fail"):
     for attribute in new_metadata["attributes"]:
         k = attribute["trait_value"]
         try:
-            attribute["trait_value"] = translation[k]
+            attribute["trait_value"] = translation[k].strip()
         except KeyError:
             if handle_missing is None:
                 continue
