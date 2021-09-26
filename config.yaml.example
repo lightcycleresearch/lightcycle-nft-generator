@@ -10,6 +10,7 @@ example:
     seller_fee_basis_points: 100
     image_format: png
   validation:
+    # basis points of 100 means it require a global minimum of 1% of all tokens for each trait
     min_rarity_basis: 100
   traits:
     # algorithms are: basic, restricted
