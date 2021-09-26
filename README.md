@@ -51,7 +51,11 @@ Generate NFTs with metaplex standard
 	```
 	nftgen.py --project example --config config.yaml --generate-images
 	```
-7. Combine assets, which copies the images and metadata into one folder
+7. Validate assets, which checks for minimum rarity and missing values
+	```
+	nftgen.py --project example --config config.yaml --validate
+	```
+8. Combine assets, which copies the images and metadata into one folder
 	```
 	nftgen.py --project example --config config.yaml --combine-assets
 	```

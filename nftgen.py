@@ -48,6 +48,11 @@ def make_args():
         "--combine-assets", action="store_true", help="images and metadata into assets"
     )
     parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="validate images and metadata with project validation settings",
+    )
+    parser.add_argument(
         "--overwrite", action="store_true", help="allow overwriting metadata"
     )
     parser.add_argument(
@@ -101,6 +106,14 @@ def main():
     if args.generate_metadata:
         su.generate_metadata_project(
             config=config, project_name=args.project, overwrite=args.overwrite
+        )
+
+    # validate
+    # --------
+    if args.validate:
+        su.validate_project(
+            config=config,
+            project_name=args.project,
         )
 
     # images

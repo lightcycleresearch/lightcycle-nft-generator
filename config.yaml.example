@@ -9,6 +9,9 @@ example:
     symbol: LCR
     seller_fee_basis_points: 100
     image_format: png
+  validation:
+    # basis points of 100 means it require a global minimum of 1% of all tokens for each trait
+    min_rarity_basis: 100
   traits:
     # algorithms are: basic, restricted
     trait_algorithm: basic
@@ -36,6 +39,8 @@ examplecsv:
     symbol: LCR
     seller_fee_basis_points: 100
     image_format: jpg
+  validation:
+    min_rarity_basis: 100
   traits:
     # name your file metadata.csv and add to the projects/examplecsv/csv/ folder
     trait_algorithm: csv
@@ -50,6 +55,8 @@ examplecombo:
     collection: lightcycle combo collection
     symbol: LCR
     seller_fee_basis_points: 100
+  validation:
+    min_rarity_basis: 100
   traits:
     trait_algorithm: combo
     # create a file called english.csv in the translations folder

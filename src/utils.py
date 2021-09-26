@@ -744,7 +744,7 @@ def load_translation(config, project_name):
             raise ValueError(
                 f"duplicate {key=} found for translation {translation_name}"
             )
-        translation[key] = value
+        translation[key] = value.strip()
 
     return translation
 
@@ -894,6 +894,121 @@ def generate_metadata_project(config, project_name, overwrite=False):
 
     if trait_algorithm in ["combo", "csv"]:
         tt.save_metadatas(metadatas=metadatas, overwrite=overwrite)
+
+
+def validate_project(config, project_name):
+    # paths
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
+    metadata_fdpath = os.path.join(project_fdpath, "metadata")
+    images_fdpath = os.path.join(project_fdpath, "images")
+    assets_fdpath = os.path.join(project_fdpath, "assets")
+
+    # settings
+    s = config[project_name]["settings"]
+    num_tokens = s["num_tokens"]
+    try:
+        image_format = s["image_format"]
+    except KeyError:
+        image_format = "png"
+
+    # checks
+    failures = {}
+    rarity = {}
+    success = True
+
+    # images
+    for token_num in range(0, num_tokens):
+        image_fpath = os.path.join(assets_fdpath, f"{token_num}.{image_format}")
+
+        # image exists
+        if not os.path.exists(image_fpath):
+            failures.setdefault("missing_images", [])
+            failures["missing_images"].append(token_num)
+            success = False
+
+    # metadata
+    for token_num in range(0, num_tokens):
+        metadata_fpath = os.path.join(assets_fdpath, f"{token_num}.json")
+
+        try:
+            with open(metadata_fpath, "r", encoding="utf-8") as f:
+                metadata = json.load(f)
+        except FileNotFoundError:
+            # metadata exists
+            failures.setdefault("missing_metadatas", [])
+            failures["missing_metadatas"].append(token_num)
+            success = False
+        else:
+            # attributes rarity
+            for attribute in metadata["attributes"]:
+                tt = attribute["trait_type"]
+                tv = attribute["trait_value"]
+
+                # types
+                rarity.setdefault("trait_types", {})
+                rarity["trait_types"].setdefault(tt, 0)
+                rarity["trait_types"][tt] += 1
+
+                # values
+                rarity.setdefault("trait_values", {})
+                rarity["trait_values"].setdefault(tv, 0)
+                rarity["trait_values"][tv] += 1
+
+    # check rarity
+    try:
+        min_rarity_basis = config[project_name]["validation"]["min_rarity_basis"]
+        logger.info(f"{min_rarity_basis=}")
+    except KeyError:
+        pass
+    else:
+        for value_name, value_counts in rarity["trait_values"].items():
+            rarity_basis = int(10000 * value_counts / num_tokens)
+            logger.debug(
+                f"{value_name} ({value_counts}/{num_tokens}) -> {rarity_basis=}"
+            )
+            if rarity_basis < min_rarity_basis:
+                failures.setdefault("low_rarity", [])
+                failures["low_rarity"].append(value_name)
+                success = False
+
+    # check missing value
+    translation = load_translation(config=config, project_name=project_name)
+    trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
+    trait_values = config[project_name]["traits"]["trait_values"]
+    expected_values = []
+    if trait_algorithm == "combo":
+        logger.info(f"checking missing values for {trait_algorithm=}")
+        for level1_name, level2_blob in trait_values.items():
+            for level2_name, level3_blob in trait_values[level1_name].items():
+                logger.debug(f"level3_blob {pformat(level3_blob)}")
+                level_expected_values = list(level3_blob.keys())
+                expected_values.extend(level_expected_values)
+        raw_expected_values = list(set(expected_values))
+        if not translation:
+            expected_values = raw_expected_values
+        else:
+            expected_values = [translation[k] for k in raw_expected_values]
+
+        logger.info(f"num expected values: {len(expected_values)}")
+
+        for ev in expected_values:
+            if ev not in rarity["trait_values"].keys():
+                failures.setdefault("missing_values", [])
+                failures["missing_values"].append(ev)
+                logger.error(f"missing value {ev}")
+                success = False
+
+    else:
+        logger.warning(f"missing values check unsupported for {trait_algorithm=}")
+
+    # results
+    if not success:
+        logger.error(pformat(failures))
+        logger.error(f"FAILED validation for {project_name}")
+    else:
+        logger.info(f"SUCCESS validated {project_name}")
+
+    return success
 
 
 def generate_images_project(config, project_name, overwrite=False):
