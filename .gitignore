@@ -6,3 +6,4 @@ images
 *.yaml
 __pycache__
 projects*/
+*.zip
