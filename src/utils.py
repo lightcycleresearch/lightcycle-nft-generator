@@ -927,7 +927,7 @@ def apply_translation(metadata, translation=None, handle_missing=None):
         translations (optional, dict): key=unique image name, value=translated.
         handle_missing (str): method to handle failures
             - default (None): skip missing
-            - all_or_nothing: fail on missing
+            - fail: fail on missing
 
     Returns:
         dict: metadata with trait_values translated
@@ -943,7 +943,7 @@ def apply_translation(metadata, translation=None, handle_missing=None):
         except KeyError:
             if handle_missing is None:
                 continue
-            elif handle_missing == "all_or_nothing":
+            elif handle_missing == "fail":
                 raise ValueError(f"translation is missing translation for {k}")
             else:
                 raise ValueError(f"invalid {handle_missing=}")

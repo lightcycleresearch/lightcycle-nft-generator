@@ -202,5 +202,5 @@ def test_apply_translation_fail_with_aon():
         metadata = su.apply_translation(
             metadata=orig_metadata,
             translation=translation,
-            handle_missing="all_or_nothing",
+            handle_missing="fail",
         )
