@@ -126,3 +126,81 @@ def test_find_sublevel():
     assert sublevels["bow"] == "archer"
     assert sublevels["arrow"] == "archer"
     assert sublevels["sword"] == "warrior"
+
+
+def test_apply_translation():
+    orig_metadata = {
+        "attributes": [
+            {"trait_type": "trait0", "value": "unchanged0"},
+            {"trait_type": "trait1", "value": "unchanged1"},
+            {"trait_type": "trait2", "value": "unchanged2"},
+        ]
+    }
+
+    translation = {
+        "unchanged0": "english0",
+        "unchanged1": "english1",
+        "unchanged2": "english2",
+    }
+    metadata = su.apply_translation(metadata=orig_metadata, translation=translation)
+    assert metadata["attributes"][0]["value"] == "english0"
+    assert metadata["attributes"][1]["value"] == "english1"
+    assert metadata["attributes"][2]["value"] == "english2"
+
+
+def test_apply_translation_empty():
+    orig_metadata = {
+        "attributes": [
+            {"trait_type": "trait0", "value": "unchanged0"},
+            {"trait_type": "trait1", "value": "unchanged1"},
+            {"trait_type": "trait2", "value": "unchanged2"},
+        ]
+    }
+    translation = None
+
+    metadata = su.apply_translation(metadata=orig_metadata, translation=translation)
+    assert metadata["attributes"][0]["value"] == "unchanged0"
+    assert metadata["attributes"][1]["value"] == "unchanged1"
+    assert metadata["attributes"][2]["value"] == "unchanged2"
+
+
+def test_apply_translation_do_not_change_empty():
+    orig_metadata = {
+        "attributes": [
+            {"trait_type": "trait0", "value": "unchanged0"},
+            {"trait_type": "trait1", "value": "unchanged1"},
+            {"trait_type": "trait2", "value": "unchanged2"},
+        ]
+    }
+
+    translation = {
+        "unchanged0": "english0",
+        # REMOVED - unchanged1
+        "unchanged2": "english2",
+    }
+    metadata = su.apply_translation(metadata=orig_metadata, translation=translation)
+    assert metadata["attributes"][0]["value"] == "english0"
+    assert metadata["attributes"][1]["value"] == "unchanged1"
+    assert metadata["attributes"][2]["value"] == "english2"
+
+
+def test_apply_translation_fail_with_aon():
+    orig_metadata = {
+        "attributes": [
+            {"trait_type": "trait0", "value": "unchanged0"},
+            {"trait_type": "trait1", "value": "unchanged1"},
+            {"trait_type": "trait2", "value": "unchanged2"},
+        ]
+    }
+
+    translation = {
+        "unchanged0": "english0",
+        # REMOVED - unchanged1
+        "unchanged2": "english2",
+    }
+    with pytest.raises(ValueError):
+        metadata = su.apply_translation(
+            metadata=orig_metadata,
+            translation=translation,
+            handle_missing="all_or_nothing",
+        )

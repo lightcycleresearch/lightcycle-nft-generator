@@ -920,14 +920,31 @@ def generate_images_project_combo(config, project_name, overwrite=False):
     tt.save_image_plans(image_plans=image_plans, overwrite=overwrite)
 
 
-def apply_translation(metadata, translation=None):
+def apply_translation(metadata, translation=None, handle_missing=None):
     """
     Args:
         metadata (dict): metadata
         translations (optional, dict): key=unique image name, value=translated.
+        handle_missing (str): method to handle failures
+            - default (None): skip missing
+            - all_or_nothing: fail on missing
 
     Returns:
         dict: metadata with trait_values translated
     """
     if not translation:
         return metadata
+
+    new_metadata = copy.deepcopy(metadata)
+    for attribute in new_metadata["attributes"]:
+        k = attribute["value"]
+        try:
+            attribute["value"] = translation[k]
+        except KeyError:
+            if handle_missing is None:
+                continue
+            elif handle_missing == "all_or_nothing":
+                raise ValueError(f"translation is missing translation for {k}")
+            else:
+                raise ValueError(f"invalid {handle_missing=}")
+    return new_metadata
