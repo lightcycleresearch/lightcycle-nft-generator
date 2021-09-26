@@ -744,7 +744,7 @@ def load_translation(config, project_name):
             raise ValueError(
                 f"duplicate {key=} found for translation {translation_name}"
             )
-        translation[key] = value
+        translation[key] = value.strip()
 
     return translation
 
@@ -973,6 +973,34 @@ def validate_project(config, project_name):
 
     # check missing value
     translation = load_translation(config=config, project_name=project_name)
+    trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
+    trait_values = config[project_name]["traits"]["trait_values"]
+    expected_values = []
+    if trait_algorithm == "combo":
+        logger.info(f"checking missing values for {trait_algorithm=}")
+        for level1_name, level2_blob in trait_values.items():
+            for level2_name, level3_blob in trait_values[level1_name].items():
+                logger.info(f"level3_blob {pformat(level3_blob)}")
+                level_expected_values = list(level3_blob.keys())
+                expected_values.extend(level_expected_values)
+        raw_expected_values = list(set(expected_values))
+        if not translation:
+            expected_values = raw_expected_values
+        else:
+            expected_values = [translation[k] for k in raw_expected_values]
+
+        logger.info(pformat(expected_values))
+        logger.info(f"num expected values: {len(expected_values)}")
+
+        for ev in expected_values:
+            if ev not in rarity["trait_values"].keys():
+                failures.setdefault("missing_values", [])
+                failures["missing_values"].append(ev)
+                logger.error(f"missing value {ev}")
+                success = False
+
+    else:
+        logger.warning(f"missing values check unsupported for {trait_algorithm=}")
 
     # results
     if not success:
