@@ -764,7 +764,10 @@ def combine_assets_project(config, project_name, overwrite=False):
     except FileExistsError:
         pass
 
+    # translation
     translation = load_translation(config=config, project_name=project_name)
+
+    # tokens
     for token_num in range(0, num_tokens):
 
         # source
@@ -786,9 +789,19 @@ def combine_assets_project(config, project_name, overwrite=False):
             continue
 
         logger.info(f"Combining assets for {token_num}")
-        # images are copied, metadata is translated
         copyfile(fpath_image_source, fpath_image_dest)
-        copyfile(fpath_metadata_source, fpath_metadata_dest)
+
+        if translation is None:
+            copyfile(fpath_metadata_source, fpath_metadata_dest)
+        else:
+            # translate metadata and write to final
+            with open(fpath_metadata_source, "r", encoding="utf-8") as f:
+                orig_metadata = json.load(f)
+            metadata = su.apply_translation(
+                metadata=orig_metadata, translation=translation, handle_missing="fail"
+            )
+            with open(fpath_metadata_dest, "w", encoding="utf-8") as f:
+                json.dump(f)
 
 
 def react_env_for_project(
