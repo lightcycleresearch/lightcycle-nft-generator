@@ -178,7 +178,9 @@ def test_apply_translation_do_not_change_empty():
         # REMOVED - unchanged1
         "unchanged2": "english2",
     }
-    metadata = su.apply_translation(metadata=orig_metadata, translation=translation)
+    metadata = su.apply_translation(
+        metadata=orig_metadata, translation=translation, handle_missing=None
+    )
     assert metadata["attributes"][0]["value"] == "english0"
     assert metadata["attributes"][1]["value"] == "unchanged1"
     assert metadata["attributes"][2]["value"] == "english2"
