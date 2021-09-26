@@ -63,3 +63,7 @@ You must have `solana-keygen` available if you want to generate the environment 
 	nftgen.py --project example --config config.yaml --react-env --react-env-start-date "01 Jan 31 12:00:00 GMT" --react-env-keypair ~/.config/solana/devnet-lightcycle.json
 	```
 Note: there is a Makefile for convenience, update the environmental variables before using
+
+## Experimental
+
+- Add translation csv file, i.e. english.csv, to the translations subdirectory to apply translations via --combine-assets

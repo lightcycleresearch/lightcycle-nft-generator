@@ -563,7 +563,7 @@ def create_scaffolding_csv(project_fdpath, traits):
 def initialize_project_folder(config, project_name):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
-    for subfolder in ["metadata", "images", "assets"]:
+    for subfolder in ["metadata", "images", "assets", "translations"]:
         ensure_fdpath(os.path.join(project_fdpath, subfolder))
 
     trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
@@ -713,6 +713,38 @@ def generate_images_project_basic(config, project_name, overwrite=False):
         img.save(dest_img_fpath, "PNG")
 
 
+def load_translation(config, project_name):
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
+
+    # translation
+    try:
+        translation_name = config[project_name]["traits"]["trait_translation"]
+    except KeyError:
+        return None
+
+    # load csv
+    translations_fdpath = os.path.join(project_fdpath, "translations")
+    translation_fpath = os.path.join(translations_fdpath, f"{translation_name}.csv")
+    try:
+        with open(translation_fpath, "r", encoding="utf-8") as f:
+            t_data = f.read()
+    except FileNotFoundError:
+        return None
+
+    # assemble translation
+    translation = {}
+    lines = t_data.split("\n")
+    for line in lines:
+        key, value = line.split(",")
+        if key in translation.keys():
+            raise ValueError(
+                f"duplicate {key=} found for translation {translation_name}"
+            )
+        translation[key] = value
+
+    return translation
+
+
 def combine_assets_project(config, project_name, overwrite=False):
     # paths
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
@@ -732,20 +764,24 @@ def combine_assets_project(config, project_name, overwrite=False):
     except FileExistsError:
         pass
 
+    # translation
+    translation = load_translation(config=config, project_name=project_name)
+
+    # tokens
     for token_num in range(0, num_tokens):
 
         # source
         image_fname = f"{token_num}.{image_format}"
         metadata_fname = f"{token_num}.json"
 
-        image_source = os.path.join(images_fdpath, image_fname)
-        metadata_source = os.path.join(metadata_fdpath, metadata_fname)
+        fpath_image_source = os.path.join(images_fdpath, image_fname)
+        fpath_metadata_source = os.path.join(metadata_fdpath, metadata_fname)
 
-        image_dest = os.path.join(assets_fdpath, image_fname)
-        metadata_dest = os.path.join(assets_fdpath, metadata_fname)
+        fpath_image_dest = os.path.join(assets_fdpath, image_fname)
+        fpath_metadata_dest = os.path.join(assets_fdpath, metadata_fname)
 
         if not overwrite and (
-            os.path.exists(image_dest) or os.path.exists(metadata_dest)
+            os.path.exists(fpath_image_dest) or os.path.exists(fpath_metadata_dest)
         ):
             logger.warning(
                 f"{image_fname} or {metadata_fname} already exist. You must pass --overwrite to overwrite"
@@ -753,9 +789,19 @@ def combine_assets_project(config, project_name, overwrite=False):
             continue
 
         logger.info(f"Combining assets for {token_num}")
-        # copy to assets
-        copyfile(image_source, image_dest)
-        copyfile(metadata_source, metadata_dest)
+        copyfile(fpath_image_source, fpath_image_dest)
+
+        if translation is None:
+            copyfile(fpath_metadata_source, fpath_metadata_dest)
+        else:
+            # translate metadata and write to final
+            with open(fpath_metadata_source, "r", encoding="utf-8") as f:
+                orig_metadata = json.load(f)
+            metadata = apply_translation(
+                metadata=orig_metadata, translation=translation, handle_missing="fail"
+            )
+            with open(fpath_metadata_dest, "w", encoding="utf-8") as f:
+                json.dump(metadata, f, indent=4)
 
 
 def react_env_for_project(
@@ -885,3 +931,33 @@ def generate_images_project_combo(config, project_name, overwrite=False):
 
     image_plans = tt.create_image_plans(metadatas=metadatas)
     tt.save_image_plans(image_plans=image_plans, overwrite=overwrite)
+
+
+def apply_translation(metadata, translation=None, handle_missing="fail"):
+    """
+    Args:
+        metadata (dict): metadata
+        translations (optional, dict): key=unique image name, value=translated.
+        handle_missing (str): method to handle failures
+            - fail: fail on missing
+            - None: skip missing
+
+    Returns:
+        dict: metadata with trait_values translated
+    """
+    if not translation:
+        return metadata
+
+    new_metadata = copy.deepcopy(metadata)
+    for attribute in new_metadata["attributes"]:
+        k = attribute["trait_value"]
+        try:
+            attribute["trait_value"] = translation[k].strip()
+        except KeyError:
+            if handle_missing is None:
+                continue
+            elif handle_missing == "fail":
+                raise ValueError(f"translation is missing translation for {k}")
+            else:
+                raise ValueError(f"invalid {handle_missing=}")
+    return new_metadata
