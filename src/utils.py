@@ -734,6 +734,7 @@ def load_translation(config, project_name):
     # assemble translation
     translation = {}
     lines = t_data.split("\n")
+    lines = [L for L in lines if L]
     for line in lines:
         key, value = line.split(",")
         if key in translation.keys():
