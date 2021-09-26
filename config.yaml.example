@@ -51,8 +51,9 @@ examplecombo:
     symbol: LCR
     seller_fee_basis_points: 100
   traits:
-    trait_translation: english
     trait_algorithm: combo
+    # create a file called english.csv in the translations folder
+    trait_translation: english
     # order matters for trait type, as we will layer subsequent traits on top
     trait_types:
       - funbox
