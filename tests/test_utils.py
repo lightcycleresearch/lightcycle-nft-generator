@@ -131,9 +131,9 @@ def test_find_sublevel():
 def test_apply_translation():
     orig_metadata = {
         "attributes": [
-            {"trait_type": "trait0", "value": "unchanged0"},
-            {"trait_type": "trait1", "value": "unchanged1"},
-            {"trait_type": "trait2", "value": "unchanged2"},
+            {"trait_type": "trait0", "trait_value": "unchanged0"},
+            {"trait_type": "trait1", "trait_value": "unchanged1"},
+            {"trait_type": "trait2", "trait_value": "unchanged2"},
         ]
     }
 
@@ -143,33 +143,33 @@ def test_apply_translation():
         "unchanged2": "english2",
     }
     metadata = su.apply_translation(metadata=orig_metadata, translation=translation)
-    assert metadata["attributes"][0]["value"] == "english0"
-    assert metadata["attributes"][1]["value"] == "english1"
-    assert metadata["attributes"][2]["value"] == "english2"
+    assert metadata["attributes"][0]["trait_value"] == "english0"
+    assert metadata["attributes"][1]["trait_value"] == "english1"
+    assert metadata["attributes"][2]["trait_value"] == "english2"
 
 
 def test_apply_translation_empty():
     orig_metadata = {
         "attributes": [
-            {"trait_type": "trait0", "value": "unchanged0"},
-            {"trait_type": "trait1", "value": "unchanged1"},
-            {"trait_type": "trait2", "value": "unchanged2"},
+            {"trait_type": "trait0", "trait_value": "unchanged0"},
+            {"trait_type": "trait1", "trait_value": "unchanged1"},
+            {"trait_type": "trait2", "trait_value": "unchanged2"},
         ]
     }
     translation = None
 
     metadata = su.apply_translation(metadata=orig_metadata, translation=translation)
-    assert metadata["attributes"][0]["value"] == "unchanged0"
-    assert metadata["attributes"][1]["value"] == "unchanged1"
-    assert metadata["attributes"][2]["value"] == "unchanged2"
+    assert metadata["attributes"][0]["trait_value"] == "unchanged0"
+    assert metadata["attributes"][1]["trait_value"] == "unchanged1"
+    assert metadata["attributes"][2]["trait_value"] == "unchanged2"
 
 
 def test_apply_translation_do_not_change_empty():
     orig_metadata = {
         "attributes": [
-            {"trait_type": "trait0", "value": "unchanged0"},
-            {"trait_type": "trait1", "value": "unchanged1"},
-            {"trait_type": "trait2", "value": "unchanged2"},
+            {"trait_type": "trait0", "trait_value": "unchanged0"},
+            {"trait_type": "trait1", "trait_value": "unchanged1"},
+            {"trait_type": "trait2", "trait_value": "unchanged2"},
         ]
     }
 
@@ -181,17 +181,17 @@ def test_apply_translation_do_not_change_empty():
     metadata = su.apply_translation(
         metadata=orig_metadata, translation=translation, handle_missing=None
     )
-    assert metadata["attributes"][0]["value"] == "english0"
-    assert metadata["attributes"][1]["value"] == "unchanged1"
-    assert metadata["attributes"][2]["value"] == "english2"
+    assert metadata["attributes"][0]["trait_value"] == "english0"
+    assert metadata["attributes"][1]["trait_value"] == "unchanged1"
+    assert metadata["attributes"][2]["trait_value"] == "english2"
 
 
 def test_apply_translation_fail_with_aon():
     orig_metadata = {
         "attributes": [
-            {"trait_type": "trait0", "value": "unchanged0"},
-            {"trait_type": "trait1", "value": "unchanged1"},
-            {"trait_type": "trait2", "value": "unchanged2"},
+            {"trait_type": "trait0", "trait_value": "unchanged0"},
+            {"trait_type": "trait1", "trait_value": "unchanged1"},
+            {"trait_type": "trait2", "trait_value": "unchanged2"},
         ]
     }
 

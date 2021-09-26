@@ -797,7 +797,7 @@ def combine_assets_project(config, project_name, overwrite=False):
             # translate metadata and write to final
             with open(fpath_metadata_source, "r", encoding="utf-8") as f:
                 orig_metadata = json.load(f)
-            metadata = su.apply_translation(
+            metadata = apply_translation(
                 metadata=orig_metadata, translation=translation, handle_missing="fail"
             )
             with open(fpath_metadata_dest, "w", encoding="utf-8") as f:
@@ -950,9 +950,9 @@ def apply_translation(metadata, translation=None, handle_missing="fail"):
 
     new_metadata = copy.deepcopy(metadata)
     for attribute in new_metadata["attributes"]:
-        k = attribute["value"]
+        k = attribute["trait_value"]
         try:
-            attribute["value"] = translation[k]
+            attribute["trait_value"] = translation[k]
         except KeyError:
             if handle_missing is None:
                 continue
