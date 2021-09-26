@@ -39,3 +39,56 @@ examplecsv:
   traits:
     # name your file metadata.csv and add to the projects/examplecsv/csv/ folder
     trait_algorithm: csv
+
+examplecombo:
+  settings:
+    working_dir: projects
+    address: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+    num_tokens: 10
+    name_prefix: lightcycle combo
+    description: lightcycle combo description
+    collection: lightcycle combo collection
+    symbol: LCR
+    seller_fee_basis_points: 100
+  traits:
+    trait_translation: english
+    trait_algorithm: combo
+    # order matters for trait type, as we will layer subsequent traits on top
+    trait_types:
+      - funbox
+      - special
+      - strength
+    # hidden traits do not have a png associated with it
+    trait_hidden:
+      - funbox
+      - strength
+    # values are weights.  rarity = weight / sum(weights_in_level)
+    trait_values:
+      funbox:
+        any:
+          ghost: 1
+          cupcake: 1
+          spoon: 1
+          fork: 1
+      special:
+        ghost:
+          ghost_special_1: 1
+          ghost_special_2: 1
+          ghost_special_3: 1
+        cupcake:
+          cupcake_special_1: 1
+          cupcake_special_2: 1
+          cupcake_special_3: 1
+        spoon:
+          spoon_special_1: 1
+          spoon_special_2: 1
+          spoon_special_3: 1
+        fork:
+          fork_special_1: 1
+          fork_special_2: 1
+          fork_special_3: 1
+      strength:
+        any:
+          strength_1: 1
+          strength_2: 1
+          strength_3: 1
