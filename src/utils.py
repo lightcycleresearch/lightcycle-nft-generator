@@ -563,7 +563,7 @@ def create_scaffolding_csv(project_fdpath, traits):
 def initialize_project_folder(config, project_name):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
-    for subfolder in ["metadata", "images", "assets"]:
+    for subfolder in ["metadata", "images", "assets", "translations"]:
         ensure_fdpath(os.path.join(project_fdpath, subfolder))
 
     trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
