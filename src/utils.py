@@ -413,7 +413,10 @@ def generate_random_attributes(traits):
                 attributes[trait_type] = selection
     else:
         for trait_type in unrestricted_types:
-            total = sum(tv[trait_type].values())
+            try:
+                total = sum(tv[trait_type].values())
+            except TypeError:
+                raise ValueError(f"bad rarity in {trait_type=}")
             selections = random.choices(
                 population=list(tv[trait_type].keys()),
                 weights=list(tv[trait_type].values()),

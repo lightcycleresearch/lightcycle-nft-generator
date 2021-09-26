@@ -3,6 +3,6 @@ venv
 metadata
 assets
 images
-config.yaml
+*.yaml
 __pycache__
 projects*/
