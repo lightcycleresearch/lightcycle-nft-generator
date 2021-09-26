@@ -726,6 +726,7 @@ def combine_assets_project(config, project_name, overwrite=False):
     metadata_fdpath = os.path.join(project_fdpath, "metadata")
     images_fdpath = os.path.join(project_fdpath, "images")
     assets_fdpath = os.path.join(project_fdpath, "assets")
+    translations_fdpath = os.path.join(project_fdpath, "translations")
 
     try:
         os.makedirs(assets_fdpath)
