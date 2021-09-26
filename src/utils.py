@@ -713,6 +713,38 @@ def generate_images_project_basic(config, project_name, overwrite=False):
         img.save(dest_img_fpath, "PNG")
 
 
+def load_translation(config, project_name):
+    project_fdpath = get_project_fdpath(config=config, project_name=project_name)
+
+    # translation
+    try:
+        translation_name = config[project_name]["traits"]["trait_translation"]
+    except KeyError:
+        return None
+
+    # load csv
+    translations_fdpath = os.path.join(project_fdpath, "translations")
+    translation_fpath = os.path.join(translations_fdpath, f"{translation_name}.csv")
+    try:
+        with open(translation_fpath, "r", encoding="utf-8") as f:
+            t_data = f.read()
+    except FileNotFoundError:
+        return None
+
+    # assemble translation
+    translation = {}
+    lines = t_data.split("\n")
+    for line in lines:
+        key, value = line.split(",")
+        if key in translation.keys():
+            raise ValueError(
+                f"duplicate {key=} found for translation {translation_name}"
+            )
+        translation[key] = value
+
+    return translation
+
+
 def combine_assets_project(config, project_name, overwrite=False):
     # paths
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
@@ -726,13 +758,13 @@ def combine_assets_project(config, project_name, overwrite=False):
     metadata_fdpath = os.path.join(project_fdpath, "metadata")
     images_fdpath = os.path.join(project_fdpath, "images")
     assets_fdpath = os.path.join(project_fdpath, "assets")
-    translations_fdpath = os.path.join(project_fdpath, "translations")
 
     try:
         os.makedirs(assets_fdpath)
     except FileExistsError:
         pass
 
+    translation = load_translation(config=config, project_name=project_name)
     for token_num in range(0, num_tokens):
 
         # source
@@ -886,3 +918,16 @@ def generate_images_project_combo(config, project_name, overwrite=False):
 
     image_plans = tt.create_image_plans(metadatas=metadatas)
     tt.save_image_plans(image_plans=image_plans, overwrite=overwrite)
+
+
+def apply_translation(metadata, translation=None):
+    """
+    Args:
+        metadata (dict): metadata
+        translations (optional, dict): key=unique image name, value=translated.
+
+    Returns:
+        dict: metadata with trait_values translated
+    """
+    if not translation:
+        return metadata
