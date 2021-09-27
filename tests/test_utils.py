@@ -206,3 +206,22 @@ def test_apply_translation_fail_with_aon():
             translation=translation,
             handle_missing="fail",
         )
+
+
+def test_apply_media_host():
+    orig_metadata = {
+        "image": "0.png",
+        "properties": {"files": [{"type": "image/png", "uri": "0.png"}]},
+    }
+
+    media_host = {
+        "0.png": "https://www.example.com/abcd?ext=png",
+        "1.png": "https://www.example.com/efgh?ext=png",
+        "2.png": "https://www.example.com/ijkl?ext=png",
+    }
+    metadata = su.apply_media_host(metadata=orig_metadata, media_host=media_host)
+    assert metadata["image"] == "https://www.example.com/abcd?ext=png"
+    assert (
+        metadata["properties"]["files"][0]["uri"]
+        == "https://www.example.com/abcd?ext=png"
+    )

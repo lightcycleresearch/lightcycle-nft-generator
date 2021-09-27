@@ -1098,3 +1098,33 @@ def apply_translation(metadata, translation=None, handle_missing="fail"):
             else:
                 raise ValueError(f"invalid {handle_missing=}")
     return new_metadata
+
+
+def apply_media_host(metadata, media_host=None, handle_missing="fail"):
+    """
+    Args:
+        metadata (dict): metadata
+        media_hosts (optional, dict): key=unique image name, value=translated.
+        handle_missing (str): method to handle failures
+            - fail: fail on missing
+            - None: skip missing
+
+    Returns:
+        dict: metadata with trait_values translated
+    """
+    if not media_host:
+        return metadata
+
+    new_metadata = copy.deepcopy(metadata)
+    for attribute in new_metadata["attributes"]:
+        k = attribute["trait_value"]
+        try:
+            attribute["trait_value"] = media_host[k].strip()
+        except KeyError:
+            if handle_missing is None:
+                continue
+            elif handle_missing == "fail":
+                raise ValueError(f"media_host is missing media_host for {k}")
+            else:
+                raise ValueError(f"invalid {handle_missing=}")
+    return new_metadata
