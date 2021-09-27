@@ -783,6 +783,7 @@ def combine_assets_project(config, project_name, overwrite=False):
     media_host = load_csv_map(
         config=config, project_name=project_name, fdname="media_hosts"
     )
+    logger.info(f"{media_host=}")
 
     # tokens
     for token_num in range(0, num_tokens):
@@ -816,16 +817,21 @@ def combine_assets_project(config, project_name, overwrite=False):
         with open(fpath_metadata_source, "r", encoding="utf-8") as f:
             orig_metadata = json.load(f)
 
+        working_metadata = copy.deepcopy(orig_metadata)
         if translation:
-            metadata = apply_translation(
-                metadata=orig_metadata, translation=translation, handle_missing="fail"
+            working_metadata = apply_translation(
+                metadata=working_metadata,
+                translation=translation,
+                handle_missing="fail",
             )
 
         if media_host:
-            raise NotImplementedError
+            working_metadata = apply_media_host(
+                metadata=working_metadata, media_host=media_host, handle_missing="fail"
+            )
 
         with open(fpath_metadata_dest, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, indent=4)
+            json.dump(working_metadata, f, indent=4)
 
 
 def react_env_for_project(
