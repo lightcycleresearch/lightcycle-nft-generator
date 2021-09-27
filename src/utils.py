@@ -1116,15 +1116,11 @@ def apply_media_host(metadata, media_host=None, handle_missing="fail"):
         return metadata
 
     new_metadata = copy.deepcopy(metadata)
-    for attribute in new_metadata["attributes"]:
-        k = attribute["trait_value"]
-        try:
-            attribute["trait_value"] = media_host[k].strip()
-        except KeyError:
-            if handle_missing is None:
-                continue
-            elif handle_missing == "fail":
-                raise ValueError(f"media_host is missing media_host for {k}")
-            else:
-                raise ValueError(f"invalid {handle_missing=}")
+    fname = new_metadata["image"]
+    new_metadata["image"] = media_host[fname]
+
+    if len(new_metadata["properties"]["files"]) != 1:
+        raise ValueError(f"invalid number of files for media host translation")
+
+    new_metadata["properties"]["files"][0]["uri"] = media_host[fname]
     return new_metadata
