@@ -566,7 +566,7 @@ def create_scaffolding_csv(project_fdpath, traits):
 def initialize_project_folder(config, project_name):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
-    for subfolder in ["metadata", "images", "assets", "translations", "media_host"]:
+    for subfolder in ["metadata", "images", "assets", "translations", "media_hosts"]:
         ensure_fdpath(os.path.join(project_fdpath, subfolder))
 
     trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
@@ -716,17 +716,25 @@ def generate_images_project_basic(config, project_name, overwrite=False):
         img.save(dest_img_fpath, "PNG")
 
 
-def load_translation(config, project_name):
+def load_csv_map(config, project_name, fdname="translations"):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
 
     # translation
-    try:
-        translation_name = config[project_name]["traits"]["trait_translation"]
-    except KeyError:
-        return None
+    if fdname == "translations":
+        try:
+            translation_name = config[project_name]["traits"]["trait_translation"]
+        except KeyError:
+            return None
+    elif fdname == "media_hosts":
+        try:
+            translation_name = config[project_name]["traits"]["trait_media_host"]
+        except KeyError:
+            return None
+    else:
+        raise ValueError(f"invalid {fdname=}")
 
     # load csv
-    translations_fdpath = os.path.join(project_fdpath, "translations")
+    translations_fdpath = os.path.join(project_fdpath, fdname)
     translation_fpath = os.path.join(translations_fdpath, f"{translation_name}.csv")
     try:
         with open(translation_fpath, "r", encoding="utf-8") as f:
@@ -769,7 +777,12 @@ def combine_assets_project(config, project_name, overwrite=False):
         pass
 
     # translation
-    translation = load_translation(config=config, project_name=project_name)
+    translation = load_csv_map(
+        config=config, project_name=project_name, fdname="translations"
+    )
+    media_host = load_csv_map(
+        config=config, project_name=project_name, fdname="media_hosts"
+    )
 
     # tokens
     for token_num in range(0, num_tokens):
@@ -972,7 +985,9 @@ def validate_project(config, project_name):
                 success = False
 
     # check missing value
-    translation = load_translation(config=config, project_name=project_name)
+    translation = load_csv_map(
+        config=config, project_name=project_name, fdname="translations"
+    )
     trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
     trait_values = config[project_name]["traits"]["trait_values"]
     expected_values = []
