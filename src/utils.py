@@ -808,17 +808,24 @@ def combine_assets_project(config, project_name, overwrite=False):
         logger.info(f"Combining assets for {token_num}")
         copyfile(fpath_image_source, fpath_image_dest)
 
-        if translation is None:
+        if translation is None and media_host is None:
             copyfile(fpath_metadata_source, fpath_metadata_dest)
-        else:
-            # translate metadata and write to final
-            with open(fpath_metadata_source, "r", encoding="utf-8") as f:
-                orig_metadata = json.load(f)
+            continue
+
+        # translate metadata and write to final
+        with open(fpath_metadata_source, "r", encoding="utf-8") as f:
+            orig_metadata = json.load(f)
+
+        if translation:
             metadata = apply_translation(
                 metadata=orig_metadata, translation=translation, handle_missing="fail"
             )
-            with open(fpath_metadata_dest, "w", encoding="utf-8") as f:
-                json.dump(metadata, f, indent=4)
+
+        if media_host:
+            raise NotImplementedError
+
+        with open(fpath_metadata_dest, "w", encoding="utf-8") as f:
+            json.dump(metadata, f, indent=4)
 
 
 def react_env_for_project(
