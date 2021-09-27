@@ -1117,7 +1117,15 @@ def apply_media_host(metadata, media_host=None, handle_missing="fail"):
 
     new_metadata = copy.deepcopy(metadata)
     fname = new_metadata["image"]
-    new_metadata["image"] = media_host[fname]
+    try:
+        new_metadata["image"] = media_host[fname]
+    except KeyError:
+        if handle_missing == "fail":
+            raise ValueError(f"missing {fname} in media_host")
+        elif handle_missing is None:
+            return metadata
+        else:
+            raise ValueError(f"invalid {handle_missing=}")
 
     if len(new_metadata["properties"]["files"]) != 1:
         raise ValueError(f"invalid number of files for media host translation")

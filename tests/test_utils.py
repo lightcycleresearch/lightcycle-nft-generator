@@ -219,9 +219,44 @@ def test_apply_media_host():
         "1.png": "https://www.example.com/efgh?ext=png",
         "2.png": "https://www.example.com/ijkl?ext=png",
     }
-    metadata = su.apply_media_host(metadata=orig_metadata, media_host=media_host)
+    metadata = su.apply_media_host(
+        metadata=orig_metadata, media_host=media_host, handle_missing="fail"
+    )
     assert metadata["image"] == "https://www.example.com/abcd?ext=png"
     assert (
         metadata["properties"]["files"][0]["uri"]
         == "https://www.example.com/abcd?ext=png"
     )
+
+
+def test_apply_media_host_with_missing():
+    orig_metadata = {
+        "image": "0.png",
+        "properties": {"files": [{"type": "image/png", "uri": "0.png"}]},
+    }
+
+    media_host = {
+        "1.png": "https://www.example.com/efgh?ext=png",
+        "2.png": "https://www.example.com/ijkl?ext=png",
+    }
+    with pytest.raises(ValueError):
+        su.apply_media_host(
+            metadata=orig_metadata, media_host=media_host, handle_missing="fail"
+        )
+
+
+def test_apply_media_host_with_missing():
+    orig_metadata = {
+        "image": "0.png",
+        "properties": {"files": [{"type": "image/png", "uri": "0.png"}]},
+    }
+
+    media_host = {
+        "1.png": "https://www.example.com/efgh?ext=png",
+        "2.png": "https://www.example.com/ijkl?ext=png",
+    }
+    metadata = su.apply_media_host(
+        metadata=orig_metadata, media_host=media_host, handle_missing=None
+    )
+    assert metadata["image"] == "0.png"
+    assert metadata["properties"]["files"][0]["uri"] == "0.png"
