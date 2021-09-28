@@ -566,7 +566,7 @@ def create_scaffolding_csv(project_fdpath, traits):
 def initialize_project_folder(config, project_name):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
     logger.info(f"Initializing {project_fdpath} folders")
-    for subfolder in ["metadata", "images", "assets", "translations"]:
+    for subfolder in ["metadata", "images", "assets", "translations", "media_hosts"]:
         ensure_fdpath(os.path.join(project_fdpath, subfolder))
 
     trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
@@ -716,17 +716,25 @@ def generate_images_project_basic(config, project_name, overwrite=False):
         img.save(dest_img_fpath, "PNG")
 
 
-def load_translation(config, project_name):
+def load_csv_map(config, project_name, fdname="translations"):
     project_fdpath = get_project_fdpath(config=config, project_name=project_name)
 
     # translation
-    try:
-        translation_name = config[project_name]["traits"]["trait_translation"]
-    except KeyError:
-        return None
+    if fdname == "translations":
+        try:
+            translation_name = config[project_name]["traits"]["trait_translation"]
+        except KeyError:
+            return None
+    elif fdname == "media_hosts":
+        try:
+            translation_name = config[project_name]["traits"]["trait_media_host"]
+        except KeyError:
+            return None
+    else:
+        raise ValueError(f"invalid {fdname=}")
 
     # load csv
-    translations_fdpath = os.path.join(project_fdpath, "translations")
+    translations_fdpath = os.path.join(project_fdpath, fdname)
     translation_fpath = os.path.join(translations_fdpath, f"{translation_name}.csv")
     try:
         with open(translation_fpath, "r", encoding="utf-8") as f:
@@ -769,7 +777,13 @@ def combine_assets_project(config, project_name, overwrite=False):
         pass
 
     # translation
-    translation = load_translation(config=config, project_name=project_name)
+    translation = load_csv_map(
+        config=config, project_name=project_name, fdname="translations"
+    )
+    media_host = load_csv_map(
+        config=config, project_name=project_name, fdname="media_hosts"
+    )
+    logger.info(f"{media_host=}")
 
     # tokens
     for token_num in range(0, num_tokens):
@@ -795,17 +809,29 @@ def combine_assets_project(config, project_name, overwrite=False):
         logger.info(f"Combining assets for {token_num}")
         copyfile(fpath_image_source, fpath_image_dest)
 
-        if translation is None:
+        if translation is None and media_host is None:
             copyfile(fpath_metadata_source, fpath_metadata_dest)
-        else:
-            # translate metadata and write to final
-            with open(fpath_metadata_source, "r", encoding="utf-8") as f:
-                orig_metadata = json.load(f)
-            metadata = apply_translation(
-                metadata=orig_metadata, translation=translation, handle_missing="fail"
+            continue
+
+        # translate metadata and write to final
+        with open(fpath_metadata_source, "r", encoding="utf-8") as f:
+            orig_metadata = json.load(f)
+
+        working_metadata = copy.deepcopy(orig_metadata)
+        if translation:
+            working_metadata = apply_translation(
+                metadata=working_metadata,
+                translation=translation,
+                handle_missing="fail",
             )
-            with open(fpath_metadata_dest, "w", encoding="utf-8") as f:
-                json.dump(metadata, f, indent=4)
+
+        if media_host:
+            working_metadata = apply_media_host(
+                metadata=working_metadata, media_host=media_host, handle_missing="fail"
+            )
+
+        with open(fpath_metadata_dest, "w", encoding="utf-8") as f:
+            json.dump(working_metadata, f, indent=4)
 
 
 def react_env_for_project(
@@ -972,7 +998,9 @@ def validate_project(config, project_name):
                 success = False
 
     # check missing value
-    translation = load_translation(config=config, project_name=project_name)
+    translation = load_csv_map(
+        config=config, project_name=project_name, fdname="translations"
+    )
     trait_algorithm = config[project_name]["traits"]["trait_algorithm"]
     trait_values = config[project_name]["traits"]["trait_values"]
     expected_values = []
@@ -1075,4 +1103,38 @@ def apply_translation(metadata, translation=None, handle_missing="fail"):
                 raise ValueError(f"translation is missing translation for {k}")
             else:
                 raise ValueError(f"invalid {handle_missing=}")
+    return new_metadata
+
+
+def apply_media_host(metadata, media_host=None, handle_missing="fail"):
+    """
+    Args:
+        metadata (dict): metadata
+        media_hosts (optional, dict): key=unique image name, value=translated.
+        handle_missing (str): method to handle failures
+            - fail: fail on missing
+            - None: skip missing
+
+    Returns:
+        dict: metadata with trait_values translated
+    """
+    if not media_host:
+        return metadata
+
+    new_metadata = copy.deepcopy(metadata)
+    fname = new_metadata["image"]
+    try:
+        new_metadata["image"] = media_host[fname]
+    except KeyError:
+        if handle_missing == "fail":
+            raise ValueError(f"missing {fname} in media_host")
+        elif handle_missing is None:
+            return metadata
+        else:
+            raise ValueError(f"invalid {handle_missing=}")
+
+    if len(new_metadata["properties"]["files"]) != 1:
+        raise ValueError(f"invalid number of files for media host translation")
+
+    new_metadata["properties"]["files"][0]["uri"] = media_host[fname]
     return new_metadata
