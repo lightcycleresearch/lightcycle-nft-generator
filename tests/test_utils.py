@@ -73,10 +73,10 @@ def test_generate_random_attributes_with_trait_restrictions():
 
 def test_simplify():
     nft_attributes = [
-        {"trait_type": "class", "trait_value": "archer"},
-        {"trait_type": "body", "trait_value": "orange"},
-        {"trait_type": "head", "trait_value": "angry"},
-        {"trait_type": "hat", "trait_value": "short"},
+        {"trait_type": "class", "value": "archer"},
+        {"trait_type": "body", "value": "orange"},
+        {"trait_type": "head", "value": "angry"},
+        {"trait_type": "hat", "value": "short"},
     ]
     flattened = su.flatten_nft_attributes(nft_attributes=nft_attributes)
     assert flattened["class"] == "archer"
@@ -131,9 +131,9 @@ def test_find_sublevel():
 def test_apply_translation():
     orig_metadata = {
         "attributes": [
-            {"trait_type": "trait0", "trait_value": "unchanged0"},
-            {"trait_type": "trait1", "trait_value": "unchanged1"},
-            {"trait_type": "trait2", "trait_value": "unchanged2"},
+            {"trait_type": "trait0", "value": "unchanged0"},
+            {"trait_type": "trait1", "value": "unchanged1"},
+            {"trait_type": "trait2", "value": "unchanged2"},
         ]
     }
 
@@ -143,33 +143,33 @@ def test_apply_translation():
         "unchanged2": "english2",
     }
     metadata = su.apply_translation(metadata=orig_metadata, translation=translation)
-    assert metadata["attributes"][0]["trait_value"] == "english0"
-    assert metadata["attributes"][1]["trait_value"] == "english1"
-    assert metadata["attributes"][2]["trait_value"] == "english2"
+    assert metadata["attributes"][0]["value"] == "english0"
+    assert metadata["attributes"][1]["value"] == "english1"
+    assert metadata["attributes"][2]["value"] == "english2"
 
 
 def test_apply_translation_empty():
     orig_metadata = {
         "attributes": [
-            {"trait_type": "trait0", "trait_value": "unchanged0"},
-            {"trait_type": "trait1", "trait_value": "unchanged1"},
-            {"trait_type": "trait2", "trait_value": "unchanged2"},
+            {"trait_type": "trait0", "value": "unchanged0"},
+            {"trait_type": "trait1", "value": "unchanged1"},
+            {"trait_type": "trait2", "value": "unchanged2"},
         ]
     }
     translation = None
 
     metadata = su.apply_translation(metadata=orig_metadata, translation=translation)
-    assert metadata["attributes"][0]["trait_value"] == "unchanged0"
-    assert metadata["attributes"][1]["trait_value"] == "unchanged1"
-    assert metadata["attributes"][2]["trait_value"] == "unchanged2"
+    assert metadata["attributes"][0]["value"] == "unchanged0"
+    assert metadata["attributes"][1]["value"] == "unchanged1"
+    assert metadata["attributes"][2]["value"] == "unchanged2"
 
 
 def test_apply_translation_do_not_change_empty():
     orig_metadata = {
         "attributes": [
-            {"trait_type": "trait0", "trait_value": "unchanged0"},
-            {"trait_type": "trait1", "trait_value": "unchanged1"},
-            {"trait_type": "trait2", "trait_value": "unchanged2"},
+            {"trait_type": "trait0", "value": "unchanged0"},
+            {"trait_type": "trait1", "value": "unchanged1"},
+            {"trait_type": "trait2", "value": "unchanged2"},
         ]
     }
 
@@ -181,17 +181,17 @@ def test_apply_translation_do_not_change_empty():
     metadata = su.apply_translation(
         metadata=orig_metadata, translation=translation, handle_missing=None
     )
-    assert metadata["attributes"][0]["trait_value"] == "english0"
-    assert metadata["attributes"][1]["trait_value"] == "unchanged1"
-    assert metadata["attributes"][2]["trait_value"] == "english2"
+    assert metadata["attributes"][0]["value"] == "english0"
+    assert metadata["attributes"][1]["value"] == "unchanged1"
+    assert metadata["attributes"][2]["value"] == "english2"
 
 
 def test_apply_translation_fail_with_aon():
     orig_metadata = {
         "attributes": [
-            {"trait_type": "trait0", "trait_value": "unchanged0"},
-            {"trait_type": "trait1", "trait_value": "unchanged1"},
-            {"trait_type": "trait2", "trait_value": "unchanged2"},
+            {"trait_type": "trait0", "value": "unchanged0"},
+            {"trait_type": "trait1", "value": "unchanged1"},
+            {"trait_type": "trait2", "value": "unchanged2"},
         ]
     }
 

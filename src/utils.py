@@ -140,7 +140,7 @@ class TokenTool:
         metadata["attributes"] = []
         for trait_type, trait_value in attributes.items():
             metadata["attributes"].append(
-                {"trait_type": trait_type, "trait_value": trait_value}
+                {"trait_type": trait_type, "value": trait_value}
             )
 
     def token_metadata_from_attributes(self, token_num, attributes):
@@ -261,7 +261,7 @@ class TokenTool:
         """
         attributes = {}
         for attr_pair in metadata["attributes"]:
-            attributes[attr_pair["trait_type"]] = attr_pair["trait_value"]
+            attributes[attr_pair["trait_type"]] = attr_pair["value"]
         logger.info(f"attributes: {pformat(attributes)}")
 
         logger.info(attributes)
@@ -427,7 +427,7 @@ def generate_random_attributes(traits):
     # build metaplex standard
     nft_attributes = []
     for ttype, tvalue in attributes.items():
-        nft_attributes.append({"trait_type": ttype, "trait_value": tvalue})
+        nft_attributes.append({"trait_type": ttype, "value": tvalue})
     return nft_attributes
 
 
@@ -438,7 +438,7 @@ def flatten_nft_attributes(nft_attributes):
     """
     flattened = {}
     for na in nft_attributes:
-        flattened[na["trait_type"]] = na["trait_value"]
+        flattened[na["trait_type"]] = na["value"]
     return flattened
 
 
@@ -968,7 +968,7 @@ def validate_project(config, project_name):
             # attributes rarity
             for attribute in metadata["attributes"]:
                 tt = attribute["trait_type"]
-                tv = attribute["trait_value"]
+                tv = attribute["value"]
 
                 # types
                 rarity.setdefault("trait_types", {})
@@ -1093,9 +1093,9 @@ def apply_translation(metadata, translation=None, handle_missing="fail"):
 
     new_metadata = copy.deepcopy(metadata)
     for attribute in new_metadata["attributes"]:
-        k = attribute["trait_value"]
+        k = attribute["value"]
         try:
-            attribute["trait_value"] = translation[k].strip()
+            attribute["value"] = translation[k].strip()
         except KeyError:
             if handle_missing is None:
                 continue
